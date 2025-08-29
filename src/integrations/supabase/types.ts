@@ -14,7 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      jurusan: {
+        Row: {
+          created_at: string
+          id: string
+          nama: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nama: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nama?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prakerin: {
+        Row: {
+          alamat_prakerin: string | null
+          created_at: string
+          id: string
+          jurusan: string
+          kelas: string | null
+          keterangan: string | null
+          nama_siswa: string
+          nilai_akhir: number | null
+          nis: string
+          pembimbing_industri: string | null
+          pembimbing_sekolah: string | null
+          tanggal_mulai: string | null
+          tanggal_selesai: string | null
+          tempat_prakerin: string | null
+          updated_at: string
+        }
+        Insert: {
+          alamat_prakerin?: string | null
+          created_at?: string
+          id?: string
+          jurusan: string
+          kelas?: string | null
+          keterangan?: string | null
+          nama_siswa: string
+          nilai_akhir?: number | null
+          nis: string
+          pembimbing_industri?: string | null
+          pembimbing_sekolah?: string | null
+          tanggal_mulai?: string | null
+          tanggal_selesai?: string | null
+          tempat_prakerin?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alamat_prakerin?: string | null
+          created_at?: string
+          id?: string
+          jurusan?: string
+          kelas?: string | null
+          keterangan?: string | null
+          nama_siswa?: string
+          nilai_akhir?: number | null
+          nis?: string
+          pembimbing_industri?: string | null
+          pembimbing_sekolah?: string | null
+          tanggal_mulai?: string | null
+          tanggal_selesai?: string | null
+          tempat_prakerin?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          id: string
+          jurusan: string
+          name: string
+          password: string
+          role: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          jurusan: string
+          name: string
+          password: string
+          role?: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          jurusan?: string
+          name?: string
+          password?: string
+          role?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
