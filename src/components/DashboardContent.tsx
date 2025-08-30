@@ -28,9 +28,7 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
       const [jurusanRes, penggunaRes, prakerinRes] = await Promise.all([
         supabase.from('jurusan').select('*', { count: 'exact' }),
         supabase.from('users').select('*', { count: 'exact' }),
-        user?.role === 'admin' 
-          ? supabase.from('prakerin').select('*', { count: 'exact' })
-          : supabase.from('prakerin').select('*', { count: 'exact' }).eq('jurusan', user?.jurusan)
+        supabase.from('prakerin').select('*', { count: 'exact' })
       ]);
 
       setStats({
@@ -43,8 +41,7 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
       // Load recent prakerin data
       const { data: prakerin } = await supabase
         .from('prakerin')
-        .select('*')
-        .eq(user?.role === 'kaprog' ? 'jurusan' : 'id', user?.role === 'kaprog' ? user.jurusan : undefined)
+        .select('*, siswa(*, jurusan(nama))')
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -144,9 +141,9 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
               {recentPrakerin.slice(0, 5).map((prakerin: any, index) => (
                 <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border/30">
                   <div>
-                    <p className="font-medium">{prakerin.nama_siswa || 'Nama tidak tersedia'}</p>
+                    <p className="font-medium">{prakerin.siswa?.nama || 'Nama tidak tersedia'}</p>
                     <p className="text-sm text-muted-foreground">
-                      {prakerin.jurusan} • NIS: {prakerin.nis}
+                      {prakerin.siswa?.jurusan?.nama || 'Jurusan tidak tersedia'} • NIS: {prakerin.siswa?.nis || 'N/A'}
                     </p>
                   </div>
                   <div className="text-right">
@@ -155,7 +152,7 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
                     </Badge>
                     <p className="text-xs text-muted-foreground">
                       {prakerin.tanggal_mulai && prakerin.tanggal_selesai 
-                        ? `${prakerin.tanggal_mulai} s/d ${prakerin.tanggal_selesai}`
+                        ? `${new Date(prakerin.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(prakerin.tanggal_selesai).toLocaleDateString('id-ID')}`
                         : 'Periode tidak tersedia'
                       }
                     </p>

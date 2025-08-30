@@ -10,6 +10,7 @@ import {
   School, 
   GraduationCap, 
   UserCircle,
+  Settings,
   LogOut 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -26,13 +27,13 @@ const Sidebar = ({ activeMenu, setActiveMenu, user }: SidebarProps) => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'jurusan', label: 'Data Jurusan', icon: BookOpen, adminOnly: true },
-    { id: 'pengguna', label: 'Data Pengguna', icon: Users, adminOnly: true },
+    { id: 'sekolah', label: 'Data Sekolah', icon: School },
+    { id: 'jurusan', label: 'Data Jurusan', icon: BookOpen },
+    { id: 'kelas', label: 'Data Kelas', icon: GraduationCap },
+    { id: 'siswa', label: 'Data Siswa', icon: UserCircle },
     { id: 'prakerin', label: 'Data Prakerin', icon: Briefcase },
-    { id: 'laporan', label: 'Rekap & Laporan', icon: FileText },
-    { id: 'sekolah', label: 'Data Sekolah', icon: School, placeholder: true },
-    { id: 'kelas', label: 'Data Kelas', icon: GraduationCap, placeholder: true },
-    { id: 'siswa', label: 'Data Siswa', icon: UserCircle, placeholder: true },
+    { id: 'laporan', label: 'Rekap dan Laporan', icon: FileText },
+    { id: 'pengaturan', label: 'Pengaturan', icon: Settings, adminOnly: true },
   ];
 
   const handleLogout = () => {
@@ -71,11 +72,11 @@ const Sidebar = ({ activeMenu, setActiveMenu, user }: SidebarProps) => {
               <Button
                 key={item.id}
                 variant={isActive ? "default" : "ghost"}
-                className={`w-full justify-start text-left ${
-                  isActive 
-                    ? 'bg-primary text-primary-foreground glow-effect' 
-                    : 'hover:bg-secondary/50'
-                } ${item.placeholder ? 'opacity-60' : ''}`}
+                 className={`w-full justify-start text-left ${
+                   isActive 
+                     ? 'bg-primary text-primary-foreground glow-effect' 
+                     : 'hover:bg-secondary/50'
+                 }`}
                 onClick={() => setActiveMenu(item.id as MenuType)}
               >
                 <Icon className="mr-3 h-4 w-4" />

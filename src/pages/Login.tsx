@@ -17,42 +17,51 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Hard-coded admin account
-  const ADMIN_ACCOUNT = {
-    username: 'admin@smkglobin.sch.id',
-    password: 'Smkglobin1@',
-    role: 'admin'
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Check if it's the admin account
-      if (formData.username === ADMIN_ACCOUNT.username && formData.password === ADMIN_ACCOUNT.password) {
-        localStorage.setItem('user', JSON.stringify(ADMIN_ACCOUNT));
+      // Try Supabase authentication first
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.username,
+        password: formData.password,
+      });
+
+      if (error) {
+        // If Supabase auth fails, check for Kaprog accounts in users table
+        const { data: users, error: dbError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('username', formData.username)
+          .eq('password', formData.password)
+          .single();
+
+        if (dbError || !users) {
+          setError('Username atau password salah');
+          return;
+        }
+
+        // Store Kaprog user data in localStorage
+        localStorage.setItem('user', JSON.stringify(users));
         navigate('/dashboard');
         return;
       }
 
-      // Check Supabase for Kaprog accounts
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', formData.username)
-        .eq('password', formData.password)
-        .single();
-
-      if (error || !users) {
-        setError('Username atau password salah');
-        return;
+      // Handle successful Supabase auth (admin user)
+      if (data.user) {
+        const userProfile = {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.user_metadata?.name || 'Administrator',
+          role: data.user.user_metadata?.role || 'admin',
+          username: data.user.email,
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userProfile));
+        navigate('/dashboard');
       }
-
-      // Store user data in localStorage
-      localStorage.setItem('user', JSON.stringify(users));
-      navigate('/dashboard');
 
     } catch (err) {
       setError('Terjadi kesalahan saat login');
@@ -97,7 +106,7 @@ const Login = () => {
               type="email"
               value={formData.username}
               onChange={handleChange}
-              placeholder="admin@smkglobin.sch.id"
+              placeholder="Masukkan username"
               required
               className="bg-input/50 border-border/50"
             />
@@ -135,10 +144,6 @@ const Login = () => {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-muted-foreground">
-          <p>Demo Account:</p>
-          <p>admin@smkglobin.sch.id / Smkglobin1@</p>
-        </div>
       </Card>
     </div>
   );

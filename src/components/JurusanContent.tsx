@@ -9,7 +9,11 @@ import { Plus, Edit, Trash2, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const JurusanContent = () => {
+interface JurusanContentProps {
+  user: any;
+}
+
+const JurusanContent = ({ user }: JurusanContentProps) => {
   const [jurusan, setJurusan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

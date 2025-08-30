@@ -6,9 +6,13 @@ import JurusanContent from '@/components/JurusanContent';
 import PenggunaContent from '@/components/PenggunaContent';
 import PrakerinContent from '@/components/PrakerinContent';
 import LaporanContent from '@/components/LaporanContent';
+import SekolahContent from '@/components/SekolahContent';
+import KelasContent from '@/components/KelasContent';
+import SiswaContent from '@/components/SiswaContent';
+import PengaturanContent from '@/components/PengaturanContent';
 import PlaceholderContent from '@/components/PlaceholderContent';
 
-export type MenuType = 'dashboard' | 'jurusan' | 'pengguna' | 'prakerin' | 'laporan' | 'sekolah' | 'kelas' | 'siswa';
+export type MenuType = 'dashboard' | 'jurusan' | 'pengguna' | 'prakerin' | 'laporan' | 'sekolah' | 'kelas' | 'siswa' | 'pengaturan';
 
 const Dashboard = () => {
   const [activeMenu, setActiveMenu] = useState<MenuType>('dashboard');
@@ -28,18 +32,20 @@ const Dashboard = () => {
     switch (activeMenu) {
       case 'dashboard':
         return <DashboardContent user={user} />;
+      case 'sekolah':
+        return <SekolahContent user={user} />;
       case 'jurusan':
-        return user?.role === 'admin' ? <JurusanContent /> : <PlaceholderContent title="Akses Ditolak" />;
-      case 'pengguna':
-        return user?.role === 'admin' ? <PenggunaContent /> : <PlaceholderContent title="Akses Ditolak" />;
+        return <JurusanContent user={user} />;
+      case 'kelas':
+        return <KelasContent user={user} />;
+      case 'siswa':
+        return <SiswaContent user={user} />;
       case 'prakerin':
         return <PrakerinContent user={user} />;
       case 'laporan':
         return <LaporanContent user={user} />;
-      case 'sekolah':
-      case 'kelas':
-      case 'siswa':
-        return <PlaceholderContent title={`Data ${activeMenu.charAt(0).toUpperCase() + activeMenu.slice(1)}`} />;
+      case 'pengaturan':
+        return user?.role === 'admin' ? <PengaturanContent user={user} /> : <PlaceholderContent title="Akses Ditolak" />;
       default:
         return <DashboardContent user={user} />;
     }
