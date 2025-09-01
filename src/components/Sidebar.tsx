@@ -11,7 +11,9 @@ import {
   GraduationCap, 
   UserCircle,
   Settings,
-  LogOut 
+  LogOut,
+  Menu,
+  X 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MenuType } from '@/pages/Dashboard';
@@ -20,9 +22,11 @@ interface SidebarProps {
   activeMenu: MenuType;
   setActiveMenu: (menu: MenuType) => void;
   user: any;
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
 }
 
-const Sidebar = ({ activeMenu, setActiveMenu, user }: SidebarProps) => {
+const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: SidebarProps) => {
   const navigate = useNavigate();
 
   const menuItems = [
@@ -33,6 +37,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user }: SidebarProps) => {
     { id: 'siswa', label: 'Data Siswa', icon: UserCircle },
     { id: 'prakerin', label: 'Data Prakerin', icon: Briefcase },
     { id: 'laporan', label: 'Rekap dan Laporan', icon: FileText },
+    { id: 'pengguna', label: 'Data Pengguna', icon: Users, adminOnly: true },
     { id: 'pengaturan', label: 'Pengaturan', icon: Settings, adminOnly: true },
   ];
 
@@ -46,21 +51,33 @@ const Sidebar = ({ activeMenu, setActiveMenu, user }: SidebarProps) => {
   );
 
   return (
-    <Card className="w-64 h-screen rounded-none border-r border-border/50 card-gradient">
-      <div className="p-6">
+    <Card className={`${collapsed ? 'w-16' : 'w-64'} h-screen rounded-none border-r border-border/50 card-gradient transition-all duration-300`}>
+      <div className={`${collapsed ? 'p-2' : 'p-6'}`}>
         {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-xl font-bold gradient-text">SIM Prakerin</h2>
-          <p className="text-sm text-muted-foreground">SMK GLOBIN</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className={`${collapsed ? 'hidden' : 'text-center flex-1'}`}>
+            <h2 className="text-xl font-bold gradient-text">SIM Prakerin</h2>
+            <p className="text-sm text-muted-foreground">SMK GLOBIN</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(!collapsed)}
+            className="hover:bg-secondary/50"
+          >
+            {collapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+          </Button>
         </div>
 
         {/* User Info */}
-        <div className="mb-6 p-3 rounded-lg bg-primary/10 border border-primary/20">
-          <p className="text-sm font-medium">{user?.name || 'Admin'}</p>
-          <p className="text-xs text-muted-foreground">
-            {user?.role === 'admin' ? 'Administrator' : `Kaprog ${user?.jurusan}`}
-          </p>
-        </div>
+        {!collapsed && (
+          <div className="mb-6 p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <p className="text-sm font-medium">{user?.name || 'Admin'}</p>
+            <p className="text-xs text-muted-foreground">
+              {user?.role === 'admin' ? 'Administrator' : `Kaprog ${user?.jurusan}`}
+            </p>
+          </div>
+        )}
 
         {/* Navigation Menu */}
         <nav className="space-y-2">
@@ -72,29 +89,32 @@ const Sidebar = ({ activeMenu, setActiveMenu, user }: SidebarProps) => {
               <Button
                 key={item.id}
                 variant={isActive ? "default" : "ghost"}
-                 className={`w-full justify-start text-left ${
+                 className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-start'} text-left ${
                    isActive 
                      ? 'bg-primary text-primary-foreground glow-effect' 
                      : 'hover:bg-secondary/50'
                  }`}
                 onClick={() => setActiveMenu(item.id as MenuType)}
+                title={collapsed ? item.label : undefined}
               >
-                <Icon className="mr-3 h-4 w-4" />
-                {item.label}
+                <Icon className={`${collapsed ? '' : 'mr-3'} h-4 w-4`} />
+                {!collapsed && item.label}
               </Button>
             );
           })}
         </nav>
 
         {/* Logout Button */}
-        <div className="absolute bottom-6 left-6 right-6">
+        <div className={`absolute bottom-6 ${collapsed ? 'left-2 right-2' : 'left-6 right-6'}`}>
           <Button 
             variant="outline" 
-            className="w-full border-destructive/50 text-destructive hover:bg-destructive/10"
+            size={collapsed ? "sm" : "default"}
+            className={`w-full border-destructive/50 text-destructive hover:bg-destructive/10 ${collapsed ? 'px-2' : ''}`}
             onClick={handleLogout}
+            title={collapsed ? "Keluar" : undefined}
           >
-            <LogOut className="mr-2 h-4 w-4" />
-            Keluar
+            <LogOut className={`${collapsed ? '' : 'mr-2'} h-4 w-4`} />
+            {!collapsed && "Keluar"}
           </Button>
         </div>
       </div>

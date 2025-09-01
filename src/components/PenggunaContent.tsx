@@ -11,7 +11,11 @@ import { Plus, Edit, Trash2, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const PenggunaContent = () => {
+interface PenggunaContentProps {
+  user: any;
+}
+
+const PenggunaContent = ({ user }: PenggunaContentProps) => {
   const [users, setUsers] = useState([]);
   const [jurusan, setJurusan] = useState([]);
   const [loading, setLoading] = useState(true);

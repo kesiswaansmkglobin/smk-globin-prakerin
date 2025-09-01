@@ -45,19 +45,36 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
 
   const loadData = async () => {
     try {
-      const [prakerinRes, jurusanRes] = await Promise.all([
-        user?.role === 'admin' 
-          ? supabase.from('prakerin').select('*').order('created_at', { ascending: false })
-          : supabase.from('prakerin').select('*').eq('jurusan', user?.jurusan).order('created_at', { ascending: false }),
-        supabase.from('jurusan').select('*').order('nama')
-      ]);
+      let prakerinQuery = supabase
+        .from('prakerin')
+        .select(`
+          *,
+          siswa!inner(
+            nis,
+            nama,
+            kelas!inner(nama),
+            jurusan!inner(nama)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      // Filter by user's jurusan if not admin
+      if (user?.role === 'kaprog') {
+        prakerinQuery = prakerinQuery.eq('siswa.jurusan.nama', user.jurusan);
+      }
+
+      const prakerinRes = await prakerinQuery;
 
       if (prakerinRes.error) throw prakerinRes.error;
-      if (jurusanRes.error) throw jurusanRes.error;
 
       setPrakerin(prakerinRes.data || []);
+      setFilteredPrakerin(prakerinRes.data || []);
+      
+      // Load jurusan for filter
+      const jurusanRes = await supabase.from('jurusan').select('*').order('nama');
+      if (jurusanRes.error) throw jurusanRes.error;
       setJurusan(jurusanRes.data || []);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Gagal memuat data",
@@ -73,7 +90,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
 
     // Filter by jurusan
     if (filters.jurusan) {
-      filtered = filtered.filter(item => item.jurusan === filters.jurusan);
+      filtered = filtered.filter(item => item.siswa?.jurusan?.nama === filters.jurusan);
     }
 
     // Filter by date range
@@ -128,10 +145,10 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
     const csvContent = [
       headers.join(','),
       ...filteredPrakerin.map(item => [
-        item.nis || '',
-        `"${item.nama_siswa || ''}"`,
-        `"${item.jurusan || ''}"`,
-        `"${item.kelas || ''}"`,
+        item.siswa?.nis || '',
+        `"${item.siswa?.nama || ''}"`,
+        `"${item.siswa?.jurusan?.nama || ''}"`,
+        `"${item.siswa?.kelas?.nama || ''}"`,
         `"${item.tempat_prakerin || ''}"`,
         `"${item.alamat_prakerin || ''}"`,
         item.tanggal_mulai || '',
@@ -191,10 +208,10 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
 
     // Table
     const tableData = filteredPrakerin.map(item => [
-      item.nis || '',
-      item.nama_siswa || '',
-      item.jurusan || '',
-      item.kelas || '',
+      item.siswa?.nis || '',
+      item.siswa?.nama || '',
+      item.siswa?.jurusan?.nama || '',
+      item.siswa?.kelas?.nama || '',
       item.tempat_prakerin || '',
       item.tanggal_mulai && item.tanggal_selesai 
         ? `${new Date(item.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(item.tanggal_selesai).toLocaleDateString('id-ID')}`
@@ -347,12 +364,12 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
                   {filteredPrakerin.map((item, index) => (
                     <TableRow key={item.id}>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell>{item.nis}</TableCell>
-                      <TableCell className="font-medium">{item.nama_siswa}</TableCell>
+                      <TableCell>{item.siswa?.nis}</TableCell>
+                      <TableCell className="font-medium">{item.siswa?.nama}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{item.jurusan}</Badge>
+                        <Badge variant="outline">{item.siswa?.jurusan?.nama}</Badge>
                       </TableCell>
-                      <TableCell>{item.kelas || '-'}</TableCell>
+                      <TableCell>{item.siswa?.kelas?.nama || '-'}</TableCell>
                       <TableCell>{item.tempat_prakerin || '-'}</TableCell>
                       <TableCell>
                         {item.tanggal_mulai && item.tanggal_selesai 

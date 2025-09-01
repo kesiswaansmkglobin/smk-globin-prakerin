@@ -12,11 +12,12 @@ import SiswaContent from '@/components/SiswaContent';
 import PengaturanContent from '@/components/PengaturanContent';
 import PlaceholderContent from '@/components/PlaceholderContent';
 
-export type MenuType = 'dashboard' | 'jurusan' | 'pengguna' | 'prakerin' | 'laporan' | 'sekolah' | 'kelas' | 'siswa' | 'pengaturan';
+export type MenuType = 'dashboard' | 'sekolah' | 'jurusan' | 'kelas' | 'siswa' | 'prakerin' | 'laporan' | 'pengguna' | 'pengaturan';
 
 const Dashboard = () => {
   const [activeMenu, setActiveMenu] = useState<MenuType>('dashboard');
   const [user, setUser] = useState<any>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,6 +45,8 @@ const Dashboard = () => {
         return <PrakerinContent user={user} />;
       case 'laporan':
         return <LaporanContent user={user} />;
+      case 'pengguna':
+        return user?.role === 'admin' ? <PenggunaContent user={user} /> : <PlaceholderContent title="Akses Ditolak" />;
       case 'pengaturan':
         return user?.role === 'admin' ? <PengaturanContent user={user} /> : <PlaceholderContent title="Akses Ditolak" />;
       default:
@@ -73,6 +76,8 @@ const Dashboard = () => {
         activeMenu={activeMenu} 
         setActiveMenu={setActiveMenu}
         user={user}
+        collapsed={sidebarCollapsed}
+        setCollapsed={setSidebarCollapsed}
       />
       <main className="flex-1 overflow-auto">
         <div className="p-6">

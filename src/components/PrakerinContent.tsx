@@ -15,17 +15,32 @@ interface PrakerinContentProps {
   user: any;
 }
 
+interface SiswaData {
+  id: string;
+  nis: string;
+  nama: string;
+  kelas: { nama: string } | null;
+  jurusan: { nama: string } | null;
+}
+
+interface KelasData {
+  id: string;
+  nama: string;
+  jurusan: { nama: string } | null;
+}
+
 const PrakerinContent = ({ user }: PrakerinContentProps) => {
-  const [prakerin, setPrakerin] = useState([]);
-  const [jurusan, setJurusan] = useState([]);
+  const [prakerin, setPrakerin] = useState<any[]>([]);
+  const [siswaList, setSiswaList] = useState<SiswaData[]>([]);
+  const [kelasList, setKelasList] = useState<KelasData[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingPrakerin, setEditingPrakerin] = useState(null);
+  const [editingPrakerin, setEditingPrakerin] = useState<any>(null);
+  const [selectedKelas, setSelectedKelas] = useState('');
+  const [selectedSiswa, setSelectedSiswa] = useState('');
+  const [filteredSiswa, setFilteredSiswa] = useState<SiswaData[]>([]);
   const [formData, setFormData] = useState({
-    nis: '',
-    nama_siswa: '',
-    jurusan: '',
-    kelas: '',
+    siswa_id: '',
     tempat_prakerin: '',
     alamat_prakerin: '',
     tanggal_mulai: '',
@@ -41,21 +56,68 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
     loadData();
   }, [user]);
 
+  useEffect(() => {
+    if (selectedKelas) {
+      const filtered = siswaList.filter(siswa => 
+        siswa.kelas?.nama === selectedKelas
+      );
+      setFilteredSiswa(filtered);
+    } else {
+      setFilteredSiswa([]);
+    }
+    setSelectedSiswa('');
+  }, [selectedKelas, siswaList]);
+
   const loadData = async () => {
     try {
-      const [prakerinRes, jurusanRes] = await Promise.all([
-        user?.role === 'admin' 
-          ? supabase.from('prakerin').select('*').order('created_at', { ascending: false })
-          : supabase.from('prakerin').select('*').eq('jurusan', user?.jurusan).order('created_at', { ascending: false }),
-        supabase.from('jurusan').select('*').order('nama')
+      let prakerinQuery = supabase
+        .from('prakerin')
+        .select(`
+          *,
+          siswa!inner(
+            nis,
+            nama,
+            kelas!inner(nama),
+            jurusan!inner(nama)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      // Filter by user's jurusan if not admin
+      if (user?.role === 'kaprog') {
+        prakerinQuery = prakerinQuery.eq('siswa.jurusan.nama', user.jurusan);
+      }
+
+      let kelasQuery = supabase
+        .from('kelas')
+        .select('id, nama, jurusan(nama)')
+        .order('nama');
+
+      let siswaQuery = supabase
+        .from('siswa')
+        .select('id, nis, nama, kelas(nama), jurusan(nama)')
+        .order('nama');
+
+      // Filter by user's jurusan if not admin
+      if (user?.role === 'kaprog') {
+        kelasQuery = kelasQuery.eq('jurusan.nama', user.jurusan);
+        siswaQuery = siswaQuery.eq('jurusan.nama', user.jurusan);
+      }
+
+      const [prakerinRes, kelasRes, siswaRes] = await Promise.all([
+        prakerinQuery,
+        kelasQuery,
+        siswaQuery
       ]);
 
       if (prakerinRes.error) throw prakerinRes.error;
-      if (jurusanRes.error) throw jurusanRes.error;
+      if (kelasRes.error) throw kelasRes.error;
+      if (siswaRes.error) throw siswaRes.error;
 
       setPrakerin(prakerinRes.data || []);
-      setJurusan(jurusanRes.data || []);
-    } catch (error) {
+      setKelasList(kelasRes.data || []);
+      setSiswaList(siswaRes.data || []);
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Gagal memuat data",
@@ -63,6 +125,17 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSiswaSelect = (siswaId: string) => {
+    const selectedSiswaData = siswaList.find(s => s.id === siswaId);
+    if (selectedSiswaData) {
+      setSelectedSiswa(siswaId);
+      setFormData(prev => ({
+        ...prev,
+        siswa_id: siswaId
+      }));
     }
   };
 
@@ -103,7 +176,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
       setDialogOpen(false);
       resetForm();
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Terjadi kesalahan",
@@ -112,13 +185,18 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
     }
   };
 
-  const handleEdit = (item) => {
+  const handleEdit = (item: any) => {
     setEditingPrakerin(item);
+    
+    // Find the siswa data
+    const siswaData = siswaList.find(s => s.id === item.siswa_id);
+    if (siswaData?.kelas?.nama) {
+      setSelectedKelas(siswaData.kelas.nama);
+    }
+    setSelectedSiswa(item.siswa_id);
+    
     setFormData({
-      nis: item.nis || '',
-      nama_siswa: item.nama_siswa || '',
-      jurusan: item.jurusan || '',
-      kelas: item.kelas || '',
+      siswa_id: item.siswa_id || '',
       tempat_prakerin: item.tempat_prakerin || '',
       alamat_prakerin: item.alamat_prakerin || '',
       tanggal_mulai: item.tanggal_mulai || '',
@@ -148,7 +226,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
       });
       
       loadData();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Gagal menghapus data prakerin",
@@ -159,10 +237,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
 
   const resetForm = () => {
     setFormData({
-      nis: '',
-      nama_siswa: '',
-      jurusan: user?.role === 'kaprog' ? user.jurusan : '',
-      kelas: '',
+      siswa_id: '',
       tempat_prakerin: '',
       alamat_prakerin: '',
       tanggal_mulai: '',
@@ -172,6 +247,8 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
       nilai_akhir: '',
       keterangan: ''
     });
+    setSelectedKelas('');
+    setSelectedSiswa('');
     setEditingPrakerin(null);
     setDialogOpen(false);
   };
@@ -182,6 +259,10 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
   };
 
   const canEdit = user?.role === 'admin' || user?.role === 'kaprog';
+
+  const getSelectedSiswaData = () => {
+    return siswaList.find(s => s.id === selectedSiswa);
+  };
 
   return (
     <div className="space-y-6">
@@ -211,64 +292,72 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nis">NIS</Label>
-                    <Input
-                      id="nis"
-                      value={formData.nis}
-                      onChange={(e) => setFormData(prev => ({ ...prev, nis: e.target.value }))}
-                      placeholder="Nomor Induk Siswa"
-                      required
-                      className="bg-input/50 border-border/50"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="nama_siswa">Nama Siswa</Label>
-                    <Input
-                      id="nama_siswa"
-                      value={formData.nama_siswa}
-                      onChange={(e) => setFormData(prev => ({ ...prev, nama_siswa: e.target.value }))}
-                      placeholder="Nama lengkap siswa"
-                      required
-                      className="bg-input/50 border-border/50"
-                    />
-                  </div>
+                {/* Kelas Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="kelas">Pilih Kelas</Label>
+                  <Select 
+                    value={selectedKelas} 
+                    onValueChange={setSelectedKelas}
+                  >
+                    <SelectTrigger className="bg-input/50 border-border/50">
+                      <SelectValue placeholder="Pilih kelas terlebih dahulu" />
+                    </SelectTrigger>
+                    <SelectContent className="card-gradient border-border/50">
+                      {kelasList.map((kelas) => (
+                        <SelectItem key={kelas.id} value={kelas.nama}>
+                          {kelas.nama} - {kelas.jurusan?.nama}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="jurusan">Jurusan</Label>
-                    <Select 
-                      value={formData.jurusan} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, jurusan: value }))}
-                      disabled={user?.role === 'kaprog'}
-                    >
-                      <SelectTrigger className="bg-input/50 border-border/50">
-                        <SelectValue placeholder="Pilih jurusan" />
-                      </SelectTrigger>
-                      <SelectContent className="card-gradient border-border/50">
-                        {jurusan.map((item) => (
-                          <SelectItem key={item.id} value={item.nama}>
-                            {item.nama}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="kelas">Kelas</Label>
-                    <Input
-                      id="kelas"
-                      value={formData.kelas}
-                      onChange={(e) => setFormData(prev => ({ ...prev, kelas: e.target.value }))}
-                      placeholder="XII RPL 1"
-                      className="bg-input/50 border-border/50"
-                    />
-                  </div>
+                {/* Siswa Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="siswa">Pilih Siswa</Label>
+                  <Select 
+                    value={selectedSiswa} 
+                    onValueChange={handleSiswaSelect}
+                    disabled={!selectedKelas}
+                  >
+                    <SelectTrigger className="bg-input/50 border-border/50">
+                      <SelectValue placeholder={selectedKelas ? "Pilih siswa" : "Pilih kelas terlebih dahulu"} />
+                    </SelectTrigger>
+                    <SelectContent className="card-gradient border-border/50">
+                      {filteredSiswa.map((siswa) => (
+                        <SelectItem key={siswa.id} value={siswa.id}>
+                          {siswa.nama} - {siswa.nis}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {/* Display Selected Siswa Info */}
+                {selectedSiswa && (
+                  <Card className="bg-primary/10 border-primary/20">
+                    <CardContent className="pt-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <Label className="text-muted-foreground">NIS:</Label>
+                          <p className="font-medium">{getSelectedSiswaData()?.nis}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground">Nama:</Label>
+                          <p className="font-medium">{getSelectedSiswaData()?.nama}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground">Kelas:</Label>
+                          <p className="font-medium">{getSelectedSiswaData()?.kelas?.nama}</p>
+                        </div>
+                        <div>
+                          <Label className="text-muted-foreground">Jurusan:</Label>
+                          <p className="font-medium">{getSelectedSiswaData()?.jurusan?.nama}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="tempat_prakerin">Tempat Prakerin</Label>
@@ -278,6 +367,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                     onChange={(e) => setFormData(prev => ({ ...prev, tempat_prakerin: e.target.value }))}
                     placeholder="PT. ABC / CV. XYZ"
                     className="bg-input/50 border-border/50"
+                    required
                   />
                 </div>
 
@@ -289,6 +379,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                     onChange={(e) => setFormData(prev => ({ ...prev, alamat_prakerin: e.target.value }))}
                     placeholder="Alamat lengkap tempat prakerin"
                     className="bg-input/50 border-border/50"
+                    required
                   />
                 </div>
 
@@ -301,6 +392,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                       value={formData.tanggal_mulai}
                       onChange={(e) => setFormData(prev => ({ ...prev, tanggal_mulai: e.target.value }))}
                       className="bg-input/50 border-border/50"
+                      required
                     />
                   </div>
                   
@@ -312,32 +404,32 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                       value={formData.tanggal_selesai}
                       onChange={(e) => setFormData(prev => ({ ...prev, tanggal_selesai: e.target.value }))}
                       className="bg-input/50 border-border/50"
+                      required
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="pembimbing_sekolah">Pembimbing Sekolah</Label>
-                    <Input
-                      id="pembimbing_sekolah"
-                      value={formData.pembimbing_sekolah}
-                      onChange={(e) => setFormData(prev => ({ ...prev, pembimbing_sekolah: e.target.value }))}
-                      placeholder="Nama guru pembimbing"
-                      className="bg-input/50 border-border/50"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="pembimbing_industri">Pembimbing Industri</Label>
-                    <Input
-                      id="pembimbing_industri"
-                      value={formData.pembimbing_industri}
-                      onChange={(e) => setFormData(prev => ({ ...prev, pembimbing_industri: e.target.value }))}
-                      placeholder="Nama pembimbing di industri"
-                      className="bg-input/50 border-border/50"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pembimbing_sekolah">Guru Pembimbing</Label>
+                  <Input
+                    id="pembimbing_sekolah"
+                    value={formData.pembimbing_sekolah}
+                    onChange={(e) => setFormData(prev => ({ ...prev, pembimbing_sekolah: e.target.value }))}
+                    placeholder="Nama guru pembimbing"
+                    className="bg-input/50 border-border/50"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="pembimbing_industri">Pembimbing Industri</Label>
+                  <Input
+                    id="pembimbing_industri"
+                    value={formData.pembimbing_industri}
+                    onChange={(e) => setFormData(prev => ({ ...prev, pembimbing_industri: e.target.value }))}
+                    placeholder="Nama pembimbing di industri"
+                    className="bg-input/50 border-border/50"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -371,7 +463,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                   <Button type="button" variant="outline" onClick={resetForm}>
                     Batal
                   </Button>
-                  <Button type="submit" className="glow-effect">
+                  <Button type="submit" className="glow-effect" disabled={!selectedSiswa}>
                     {editingPrakerin ? 'Simpan' : 'Tambah'}
                   </Button>
                 </div>
@@ -405,6 +497,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                     <TableHead>No</TableHead>
                     <TableHead>NIS</TableHead>
                     <TableHead>Nama Siswa</TableHead>
+                    <TableHead>Kelas</TableHead>
                     <TableHead>Jurusan</TableHead>
                     <TableHead>Tempat Prakerin</TableHead>
                     <TableHead>Periode</TableHead>
@@ -416,10 +509,13 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                   {prakerin.map((item, index) => (
                     <TableRow key={item.id}>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell>{item.nis}</TableCell>
-                      <TableCell className="font-medium">{item.nama_siswa}</TableCell>
+                      <TableCell>{item.siswa?.nis}</TableCell>
+                      <TableCell className="font-medium">{item.siswa?.nama}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{item.jurusan}</Badge>
+                        <Badge variant="outline">{item.siswa?.kelas?.nama}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{item.siswa?.jurusan?.nama}</Badge>
                       </TableCell>
                       <TableCell>{item.tempat_prakerin || '-'}</TableCell>
                       <TableCell>
