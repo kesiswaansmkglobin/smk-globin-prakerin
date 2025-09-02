@@ -58,13 +58,22 @@ const Dashboard = () => {
     return null;
   }
 
-  // Simple layout for Kaprog (no sidebar)
+  // Simple layout for Kaprog (with sidebar but limited menu)
   if (user.role === 'kaprog') {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="p-6">
-          <DashboardContent user={user} />
-        </div>
+      <div className="min-h-screen bg-background flex">
+        <Sidebar 
+          activeMenu={activeMenu} 
+          setActiveMenu={setActiveMenu}
+          user={user}
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
+        />
+        <main className="flex-1 overflow-auto">
+          <div className="p-6">
+            {renderContent()}
+          </div>
+        </main>
       </div>
     );
   }

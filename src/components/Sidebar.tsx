@@ -46,9 +46,16 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
     navigate('/');
   };
 
-  const filteredMenuItems = menuItems.filter(item => 
-    !item.adminOnly || user?.role === 'admin'
-  );
+  const filteredMenuItems = menuItems.filter(item => {
+    if (item.adminOnly && user?.role !== 'admin') return false;
+    
+    // For kaprog, only show specific menus
+    if (user?.role === 'kaprog') {
+      return ['dashboard', 'siswa', 'prakerin', 'laporan'].includes(item.id);
+    }
+    
+    return true;
+  });
 
   return (
     <Card className={`${collapsed ? 'w-16' : 'w-64'} h-screen rounded-none border-r border-border/50 card-gradient transition-all duration-300`}>
@@ -104,8 +111,8 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
           })}
         </nav>
 
-        {/* Logout Button */}
-        <div className={`absolute bottom-6 ${collapsed ? 'left-2 right-2' : 'left-6 right-6'}`}>
+        {/* Logout Button - below menu items */}
+        <div className="mt-4 pt-4 border-t border-border/50">
           <Button 
             variant="outline" 
             size={collapsed ? "sm" : "default"}

@@ -6,32 +6,32 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Filter } from 'lucide-react';
+import { FileText, Download, Filter, Calendar, Users, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-
-// Extend jsPDF type to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
+import { exportToCSV, exportToPDF } from '@/utils/export';
+import { formatDate, formatDateRange } from '@/utils/formatters';
 
 interface LaporanContentProps {
   user: any;
 }
 
 const LaporanContent = ({ user }: LaporanContentProps) => {
-  const [prakerin, setPrakerin] = useState([]);
-  const [filteredPrakerin, setFilteredPrakerin] = useState([]);
-  const [jurusan, setJurusan] = useState([]);
+  const [prakerin, setPrakerin] = useState<any[]>([]);
+  const [filteredPrakerin, setFilteredPrakerin] = useState<any[]>([]);
+  const [jurusan, setJurusan] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    aktif: 0,
+    selesai: 0,
+    rataRataNilai: 0
+  });
   const [filters, setFilters] = useState({
     jurusan: user?.role === 'kaprog' ? user.jurusan : '',
     tanggal_mulai: '',
-    tanggal_selesai: ''
+    tanggal_selesai: '',
+    status: ''
   });
   const { toast } = useToast();
 
@@ -52,7 +52,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
           siswa!inner(
             nis,
             nama,
-            kelas!inner(nama),
+            kelas!inner(nama, tingkat),
             jurusan!inner(nama)
           )
         `)
@@ -63,17 +63,28 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
         prakerinQuery = prakerinQuery.eq('siswa.jurusan.nama', user.jurusan);
       }
 
-      const prakerinRes = await prakerinQuery;
+      const [prakerinRes, jurusanRes] = await Promise.all([
+        prakerinQuery,
+        supabase.from('jurusan').select('*').order('nama')
+      ]);
 
       if (prakerinRes.error) throw prakerinRes.error;
-
-      setPrakerin(prakerinRes.data || []);
-      setFilteredPrakerin(prakerinRes.data || []);
-      
-      // Load jurusan for filter
-      const jurusanRes = await supabase.from('jurusan').select('*').order('nama');
       if (jurusanRes.error) throw jurusanRes.error;
+
+      const prakerinData = prakerinRes.data || [];
+      setPrakerin(prakerinData);
       setJurusan(jurusanRes.data || []);
+
+      // Calculate statistics
+      const total = prakerinData.length;
+      const aktif = prakerinData.filter(p => p.status === 'aktif').length;
+      const selesai = prakerinData.filter(p => p.status === 'selesai' || p.nilai_akhir).length;
+      const nilaiList = prakerinData.filter(p => p.nilai_akhir).map(p => p.nilai_akhir);
+      const rataRataNilai = nilaiList.length > 0 
+        ? nilaiList.reduce((sum, nilai) => sum + nilai, 0) / nilaiList.length 
+        : 0;
+
+      setStats({ total, aktif, selesai, rataRataNilai });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -91,6 +102,11 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
     // Filter by jurusan
     if (filters.jurusan) {
       filtered = filtered.filter(item => item.siswa?.jurusan?.nama === filters.jurusan);
+    }
+
+    // Filter by status
+    if (filters.status) {
+      filtered = filtered.filter(item => item.status === filters.status);
     }
 
     // Filter by date range
@@ -113,11 +129,12 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
     setFilters({
       jurusan: user?.role === 'kaprog' ? user.jurusan : '',
       tanggal_mulai: '',
-      tanggal_selesai: ''
+      tanggal_selesai: '',
+      status: ''
     });
   };
 
-  const exportToCSV = () => {
+  const handleExportCSV = () => {
     if (filteredPrakerin.length === 0) {
       toast({
         title: "Peringatan",
@@ -127,56 +144,47 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
       return;
     }
 
-    const headers = [
-      'NIS',
-      'Nama Siswa',
-      'Jurusan',
-      'Kelas',
-      'Tempat Prakerin',
-      'Alamat Prakerin',
-      'Tanggal Mulai',
-      'Tanggal Selesai',
-      'Pembimbing Sekolah',
-      'Pembimbing Industri',
-      'Nilai Akhir',
-      'Keterangan'
+    const columns = [
+      { key: 'siswa.nis', label: 'NIS' },
+      { key: 'siswa.nama', label: 'Nama Siswa' },
+      { key: 'siswa.jurusan.nama', label: 'Jurusan' },
+      { key: 'siswa.kelas.nama', label: 'Kelas' },
+      { key: 'tempat_prakerin', label: 'Tempat Prakerin' },
+      { key: 'alamat_prakerin', label: 'Alamat Prakerin' },
+      { 
+        key: 'tanggal_mulai', 
+        label: 'Tanggal Mulai',
+        formatter: formatDate
+      },
+      { 
+        key: 'tanggal_selesai', 
+        label: 'Tanggal Selesai',
+        formatter: formatDate
+      },
+      { key: 'pembimbing_sekolah', label: 'Pembimbing Sekolah' },
+      { key: 'pembimbing_industri', label: 'Pembimbing Industri' },
+      { key: 'nilai_akhir', label: 'Nilai Akhir' },
+      { key: 'status', label: 'Status' },
+      { key: 'keterangan', label: 'Keterangan' }
     ];
 
-    const csvContent = [
-      headers.join(','),
-      ...filteredPrakerin.map(item => [
-        item.siswa?.nis || '',
-        `"${item.siswa?.nama || ''}"`,
-        `"${item.siswa?.jurusan?.nama || ''}"`,
-        `"${item.siswa?.kelas?.nama || ''}"`,
-        `"${item.tempat_prakerin || ''}"`,
-        `"${item.alamat_prakerin || ''}"`,
-        item.tanggal_mulai || '',
-        item.tanggal_selesai || '',
-        `"${item.pembimbing_sekolah || ''}"`,
-        `"${item.pembimbing_industri || ''}"`,
-        item.nilai_akhir || '',
-        `"${item.keterangan || ''}"`
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `laporan_prakerin_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast({
-      title: "Berhasil",
-      description: "Data berhasil diekspor ke CSV"
-    });
+    try {
+      exportToCSV(filteredPrakerin, columns, `laporan_prakerin_${new Date().toISOString().split('T')[0]}`);
+      
+      toast({
+        title: "Berhasil",
+        description: "Data berhasil diekspor ke CSV"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
-  const exportToPDF = () => {
+  const handleExportPDF = () => {
     if (filteredPrakerin.length === 0) {
       toast({
         title: "Peringatan",
@@ -186,59 +194,38 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
       return;
     }
 
-    const doc = new jsPDF();
-    
-    // Title
-    doc.setFontSize(16);
-    doc.text('LAPORAN DATA PRAKERIN SMK GLOBIN', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-    
-    // Filters info
-    doc.setFontSize(10);
-    let yPos = 35;
-    if (filters.jurusan) {
-      doc.text(`Jurusan: ${filters.jurusan}`, 20, yPos);
-      yPos += 7;
+    const columns = [
+      { key: 'siswa.nis', label: 'NIS' },
+      { key: 'siswa.nama', label: 'Nama Siswa' },
+      { key: 'siswa.jurusan.nama', label: 'Jurusan' },
+      { key: 'siswa.kelas.nama', label: 'Kelas' },
+      { key: 'tempat_prakerin', label: 'Tempat Prakerin' },
+      { 
+        key: 'periode', 
+        label: 'Periode',
+        formatter: (_, item) => formatDateRange(item.tanggal_mulai, item.tanggal_selesai)
+      },
+      { key: 'nilai_akhir', label: 'Nilai' }
+    ];
+
+    const title = 'LAPORAN DATA PRAKERIN SMK GLOBIN';
+    let subtitle = `Total Data: ${filteredPrakerin.length}`;
+    if (filters.jurusan) subtitle += ` | Jurusan: ${filters.jurusan}`;
+
+    try {
+      exportToPDF(filteredPrakerin, columns, `laporan_prakerin_${new Date().toISOString().split('T')[0]}`, title, subtitle);
+      
+      toast({
+        title: "Berhasil",
+        description: "Data berhasil diekspor ke PDF"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
     }
-    if (filters.tanggal_mulai || filters.tanggal_selesai) {
-      doc.text(`Periode: ${filters.tanggal_mulai || 'Awal'} s/d ${filters.tanggal_selesai || 'Akhir'}`, 20, yPos);
-      yPos += 7;
-    }
-    doc.text(`Total Data: ${filteredPrakerin.length}`, 20, yPos);
-    yPos += 10;
-
-    // Table
-    const tableData = filteredPrakerin.map(item => [
-      item.siswa?.nis || '',
-      item.siswa?.nama || '',
-      item.siswa?.jurusan?.nama || '',
-      item.siswa?.kelas?.nama || '',
-      item.tempat_prakerin || '',
-      item.tanggal_mulai && item.tanggal_selesai 
-        ? `${new Date(item.tanggal_mulai).toLocaleDateString('id-ID')} s/d ${new Date(item.tanggal_selesai).toLocaleDateString('id-ID')}`
-        : '',
-      item.nilai_akhir?.toString() || ''
-    ]);
-
-    doc.autoTable({
-      head: [['NIS', 'Nama Siswa', 'Jurusan', 'Kelas', 'Tempat Prakerin', 'Periode', 'Nilai']],
-      body: tableData,
-      startY: yPos,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [34, 211, 238] }, // Cyan color
-      alternateRowStyles: { fillColor: [240, 240, 240] }
-    });
-
-    doc.save(`laporan_prakerin_${new Date().toISOString().split('T')[0]}.pdf`);
-
-    toast({
-      title: "Berhasil",
-      description: "Data berhasil diekspor ke PDF"
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('id-ID');
   };
 
   return (
@@ -253,6 +240,59 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
         </p>
       </div>
 
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="card-gradient border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Prakerin</p>
+                <p className="text-2xl font-bold text-primary">{stats.total}</p>
+              </div>
+              <Users className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-gradient border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Sedang Aktif</p>
+                <p className="text-2xl font-bold text-blue-500">{stats.aktif}</p>
+              </div>
+              <Calendar className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-gradient border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Selesai</p>
+                <p className="text-2xl font-bold text-green-500">{stats.selesai}</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-gradient border-border/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Rata-rata Nilai</p>
+                <p className="text-2xl font-bold text-yellow-500">
+                  {stats.rataRataNilai > 0 ? stats.rataRataNilai.toFixed(1) : '-'}
+                </p>
+              </div>
+              <FileText className="h-8 w-8 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filter Section */}
       <Card className="card-gradient border-border/50">
         <CardHeader>
@@ -262,7 +302,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             {user?.role === 'admin' && (
               <div className="space-y-2">
                 <Label htmlFor="filter-jurusan">Jurusan</Label>
@@ -284,6 +324,23 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
                 </Select>
               </div>
             )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="filter-status">Status</Label>
+              <Select 
+                value={filters.status} 
+                onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger className="bg-input/50 border-border/50">
+                  <SelectValue placeholder="Semua status" />
+                </SelectTrigger>
+                <SelectContent className="card-gradient border-border/50">
+                  <SelectItem value="">Semua Status</SelectItem>
+                  <SelectItem value="aktif">Aktif</SelectItem>
+                  <SelectItem value="selesai">Selesai</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             
             <div className="space-y-2">
               <Label htmlFor="filter-mulai">Tanggal Mulai (Dari)</Label>
@@ -312,11 +369,11 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
             <Button variant="outline" onClick={resetFilters}>
               Reset Filter
             </Button>
-            <Button className="glow-effect" onClick={exportToCSV}>
+            <Button className="glow-effect" onClick={handleExportCSV}>
               <Download className="mr-2 h-4 w-4" />
               Unduh CSV
             </Button>
-            <Button className="glow-effect" onClick={exportToPDF}>
+            <Button className="glow-effect" onClick={handleExportPDF}>
               <Download className="mr-2 h-4 w-4" />
               Unduh PDF
             </Button>
@@ -358,6 +415,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
                     <TableHead>Pembimbing Sekolah</TableHead>
                     <TableHead>Pembimbing Industri</TableHead>
                     <TableHead>Nilai</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -372,10 +430,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
                       <TableCell>{item.siswa?.kelas?.nama || '-'}</TableCell>
                       <TableCell>{item.tempat_prakerin || '-'}</TableCell>
                       <TableCell>
-                        {item.tanggal_mulai && item.tanggal_selesai 
-                          ? `${formatDate(item.tanggal_mulai)} s/d ${formatDate(item.tanggal_selesai)}`
-                          : '-'
-                        }
+                        {formatDateRange(item.tanggal_mulai, item.tanggal_selesai)}
                       </TableCell>
                       <TableCell>{item.pembimbing_sekolah || '-'}</TableCell>
                       <TableCell>{item.pembimbing_industri || '-'}</TableCell>
@@ -387,6 +442,13 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
                             {item.nilai_akhir}
                           </Badge>
                         ) : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={item.status === 'aktif' ? "default" : "secondary"}
+                        >
+                          {item.status || 'aktif'}
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}

@@ -11,7 +11,7 @@ declare module 'jspdf' {
 export interface ExportColumn {
   key: string;
   label: string;
-  formatter?: (value: any) => string;
+  formatter?: (value: any, item?: any) => string;
 }
 
 export function exportToCSV<T>(
@@ -30,7 +30,7 @@ export function exportToCSV<T>(
     ...data.map(item => 
       columns.map(col => {
         const value = getValue(item, col.key);
-        const formatted = col.formatter ? col.formatter(value) : value;
+        const formatted = col.formatter ? col.formatter(value, item) : value;
         return `"${String(formatted || '').replace(/"/g, '""')}"`;
       }).join(',')
     )
@@ -75,7 +75,7 @@ export function exportToPDF<T>(
   const tableData = data.map(item =>
     columns.map(col => {
       const value = getValue(item, col.key);
-      return col.formatter ? col.formatter(value) : String(value || '');
+      return col.formatter ? col.formatter(value, item) : String(value || '');
     })
   );
 
