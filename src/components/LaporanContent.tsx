@@ -119,12 +119,12 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
     let filtered = [...prakerin];
 
     // Filter by jurusan
-    if (filters.jurusan) {
+    if (filters.jurusan && filters.jurusan !== 'all') {
       filtered = filtered.filter(item => item.siswa?.jurusan?.nama === filters.jurusan);
     }
 
     // Filter by status
-    if (filters.status) {
+    if (filters.status && filters.status !== 'all') {
       filtered = filtered.filter(item => item.status === filters.status);
     }
 
@@ -146,10 +146,10 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
 
   const resetFilters = () => {
     setFilters({
-      jurusan: user?.role === 'kaprog' ? user.jurusan : '',
+      jurusan: user?.role === 'kaprog' ? user.jurusan : 'all',
       tanggal_mulai: '',
       tanggal_selesai: '',
-      status: ''
+      status: 'all'
     });
   };
 
@@ -333,7 +333,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
                     <SelectValue placeholder="Semua jurusan" />
                   </SelectTrigger>
                   <SelectContent className="card-gradient border-border/50">
-                    <SelectItem value="">Semua Jurusan</SelectItem>
+                    <SelectItem value="all">Semua Jurusan</SelectItem>
                     {jurusan.map((item) => (
                       <SelectItem key={item.id} value={item.nama}>
                         {item.nama}
@@ -354,7 +354,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
                   <SelectValue placeholder="Semua status" />
                 </SelectTrigger>
                 <SelectContent className="card-gradient border-border/50">
-                  <SelectItem value="">Semua Status</SelectItem>
+                  <SelectItem value="all">Semua Status</SelectItem>
                   <SelectItem value="aktif">Aktif</SelectItem>
                   <SelectItem value="selesai">Selesai</SelectItem>
                 </SelectContent>
