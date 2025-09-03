@@ -61,9 +61,23 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
     
     try {
       if (editingUser) {
+        // For updates, use RPC to properly hash password if provided
+        if (formData.password) {
+          const { error } = await supabase.rpc('hash_password', {
+            password: formData.password
+          });
+          if (error) throw error;
+        }
+        
         const updateData = { ...formData };
         if (!updateData.password) {
           delete updateData.password; // Don't update password if empty
+        } else {
+          // Hash the password before updating
+          const { data: hashedPassword, error: hashError } = await supabase
+            .rpc('hash_password', { password: updateData.password });
+          if (hashError) throw hashError;
+          updateData.password = hashedPassword;
         }
 
         const { error } = await supabase
@@ -78,9 +92,18 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
           description: "Data pengguna berhasil diperbarui"
         });
       } else {
+        // For new users, hash the password first
+        const { data: hashedPassword, error: hashError } = await supabase
+          .rpc('hash_password', { password: formData.password });
+        if (hashError) throw hashError;
+
         const { error } = await supabase
           .from('users')
-          .insert([{ ...formData, role: 'kaprog' }]);
+          .insert([{ 
+            ...formData, 
+            password: hashedPassword,
+            role: 'kaprog' 
+          }]);
 
         if (error) throw error;
 

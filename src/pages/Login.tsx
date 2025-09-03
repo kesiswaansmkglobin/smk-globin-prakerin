@@ -30,21 +30,20 @@ const Login = () => {
       });
 
       if (error) {
-        // If Supabase auth fails, check for Kaprog accounts in users table
+        // If Supabase auth fails, check for Kaprog accounts using secure authentication
         const { data: users, error: dbError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('username', formData.username)
-          .eq('password', formData.password)
-          .single();
+          .rpc('authenticate_user', {
+            input_username: formData.username,
+            input_password: formData.password
+          });
 
-        if (dbError || !users) {
+        if (dbError || !users || users.length === 0) {
           setError('Username atau password salah');
           return;
         }
 
         // Store Kaprog user data in localStorage
-        localStorage.setItem('user', JSON.stringify(users));
+        localStorage.setItem('user', JSON.stringify(users[0]));
         navigate('/dashboard');
         return;
       }
