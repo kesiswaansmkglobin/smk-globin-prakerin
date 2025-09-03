@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,15 +10,26 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 
 interface PenggunaContentProps {
   user: any;
 }
 
 const PenggunaContent = ({ user }: PenggunaContentProps) => {
-  const [users, setUsers] = useState([]);
-  const [jurusan, setJurusan] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Use optimized hooks for better performance
+  const { data: users = [], loading: usersLoading, refetch: refetchUsers } = useSupabaseQuery({
+    table: 'users',
+    orderBy: { column: 'name', ascending: true }
+  });
+
+  const { data: jurusan = [], loading: jurusanLoading } = useSupabaseQuery({
+    table: 'jurusan',
+    orderBy: { column: 'nama', ascending: true }
+  });
+
+  const loading = usersLoading || jurusanLoading;
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -28,33 +39,6 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
     jurusan: ''
   });
   const { toast } = useToast();
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const [usersRes, jurusanRes] = await Promise.all([
-        supabase.from('users').select('*').order('name'),
-        supabase.from('jurusan').select('*').order('nama')
-      ]);
-
-      if (usersRes.error) throw usersRes.error;
-      if (jurusanRes.error) throw jurusanRes.error;
-
-      setUsers(usersRes.data || []);
-      setJurusan(jurusanRes.data || []);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Gagal memuat data",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,7 +100,7 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
       setDialogOpen(false);
       setFormData({ name: '', username: '', password: '', jurusan: '' });
       setEditingUser(null);
-      loadData();
+      refetchUsers(); // Use refetch instead of loadData
     } catch (error) {
       toast({
         title: "Error",
@@ -153,7 +137,7 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
         description: "Data pengguna berhasil dihapus"
       });
       
-      loadData();
+      refetchUsers(); // Use refetch instead of loadData
     } catch (error) {
       toast({
         title: "Error",
