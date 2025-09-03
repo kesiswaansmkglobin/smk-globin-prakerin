@@ -33,6 +33,7 @@ const KelasContent = ({ user }: KelasContentProps) => {
   }, []);
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const [kelasRes, jurusanRes] = await Promise.all([
         supabase
@@ -48,6 +49,9 @@ const KelasContent = ({ user }: KelasContentProps) => {
       if (kelasRes.error) throw kelasRes.error;
       if (jurusanRes.error) throw jurusanRes.error;
 
+      console.log('Kelas data loaded:', kelasRes.data?.length || 0);
+      console.log('Jurusan data loaded:', jurusanRes.data?.length || 0);
+      
       setKelas(kelasRes.data || []);
       setJurusan(jurusanRes.data || []);
     } catch (error) {

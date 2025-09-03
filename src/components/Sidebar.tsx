@@ -62,10 +62,26 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
       <div className={`${collapsed ? 'p-2' : 'p-6'} h-full flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div className={`${collapsed ? 'hidden' : 'text-center flex-1'}`}>
-            <h2 className="text-xl font-bold gradient-text">SIM Prakerin</h2>
-            <p className="text-sm text-muted-foreground">SMK GLOBIN</p>
+          <div className={`${collapsed ? 'hidden' : 'flex items-center space-x-3 flex-1'}`}>
+            <img 
+              src="/lovable-uploads/05a99674-2f4f-42a1-b184-4bab79cc07c7.png" 
+              alt="SMK Globin Logo" 
+              className="h-12 w-12 object-contain"
+            />
+            <div>
+              <h2 className="text-lg font-bold gradient-text">SIM Prakerin</h2>
+              <p className="text-xs text-muted-foreground">SMK GLOBIN BOGOR</p>
+            </div>
           </div>
+          {collapsed && (
+            <div className="flex items-center justify-center w-full">
+              <img 
+                src="/lovable-uploads/05a99674-2f4f-42a1-b184-4bab79cc07c7.png" 
+                alt="SMK Globin Logo" 
+                className="h-8 w-8 object-contain"
+              />
+            </div>
+          )}
           <Button
             variant="ghost"
             size="sm"
