@@ -59,7 +59,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
 
   return (
     <Card className={`${collapsed ? 'w-16' : 'w-64'} h-screen rounded-none border-r border-border/50 card-gradient transition-all duration-300`}>
-      <div className={`${collapsed ? 'p-2' : 'p-6'}`}>
+      <div className={`${collapsed ? 'p-2' : 'p-6'} h-full flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className={`${collapsed ? 'hidden' : 'text-center flex-1'}`}>
@@ -111,12 +111,12 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
           })}
         </nav>
 
-        {/* Logout Button - below menu items */}
-        <div className="mt-4 pt-4 border-t border-border/50">
+        {/* Logout Button - properly positioned within sidebar */}
+        <div className="mt-auto pt-6">
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size={collapsed ? "sm" : "default"}
-            className={`w-full border-destructive/50 text-destructive hover:bg-destructive/10 ${collapsed ? 'px-2' : ''}`}
+            className={`w-full text-destructive hover:bg-destructive/10 hover:text-destructive border border-destructive/20 ${collapsed ? 'px-2' : ''} transition-colors`}
             onClick={handleLogout}
             title={collapsed ? "Keluar" : undefined}
           >

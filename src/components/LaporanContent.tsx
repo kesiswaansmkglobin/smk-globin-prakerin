@@ -45,22 +45,33 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
 
   const loadData = async () => {
     try {
+      setLoading(true);
       let prakerinQuery = supabase
         .from('prakerin')
         .select(`
           *,
-          siswa!inner(
+          siswa(
             nis,
             nama,
-            kelas!inner(nama, tingkat),
-            jurusan!inner(nama)
+            kelas(nama, tingkat),
+            jurusan(nama)
           )
         `)
         .order('created_at', { ascending: false });
 
       // Filter by user's jurusan if not admin
       if (user?.role === 'kaprog') {
-        prakerinQuery = prakerinQuery.eq('siswa.jurusan.nama', user.jurusan);
+        // First get the jurusan ID for the kaprog user
+        const { data: jurusanData } = await supabase
+          .from('jurusan')
+          .select('id')
+          .eq('nama', user.jurusan)
+          .single();
+          
+        if (jurusanData) {
+          prakerinQuery = prakerinQuery
+            .eq('siswa.jurusan_id', jurusanData.id);
+        }
       }
 
       const [prakerinRes, jurusanRes] = await Promise.all([
@@ -68,10 +79,17 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
         supabase.from('jurusan').select('*').order('nama')
       ]);
 
-      if (prakerinRes.error) throw prakerinRes.error;
-      if (jurusanRes.error) throw jurusanRes.error;
+      if (prakerinRes.error) {
+        console.error('Prakerin query error:', prakerinRes.error);
+        throw prakerinRes.error;
+      }
+      if (jurusanRes.error) {
+        console.error('Jurusan query error:', jurusanRes.error);
+        throw jurusanRes.error;
+      }
 
       const prakerinData = prakerinRes.data || [];
+      console.log('Loaded prakerin data:', prakerinData);
       setPrakerin(prakerinData);
       setJurusan(jurusanRes.data || []);
 
@@ -86,9 +104,10 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
 
       setStats({ total, aktif, selesai, rataRataNilai });
     } catch (error: any) {
+      console.error('Load data error:', error);
       toast({
         title: "Error",
-        description: "Gagal memuat data",
+        description: `Gagal memuat data: ${error.message}`,
         variant: "destructive"
       });
     } finally {
