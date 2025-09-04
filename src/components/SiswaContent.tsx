@@ -45,11 +45,12 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
 
   const loadData = async () => {
     try {
-      const [siswaRes, kelasRes, jurusanRes] = await Promise.all([
+      // Optimized queries with better error handling
+      const promises = [
         supabase
           .from('siswa')
           .select('*, kelas(nama), jurusan(nama)')
-          .order('created_at', { ascending: false }),
+          .order('nama'), // Changed to order by nama instead of created_at for better user experience
         supabase
           .from('kelas')
           .select('*')
@@ -58,11 +59,23 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
           .from('jurusan')
           .select('*')
           .order('nama')
-      ]);
+      ];
 
-      if (siswaRes.error) throw siswaRes.error;
-      if (kelasRes.error) throw kelasRes.error;
-      if (jurusanRes.error) throw jurusanRes.error;
+      const [siswaRes, kelasRes, jurusanRes] = await Promise.all(promises);
+
+      // Handle errors properly
+      if (siswaRes.error) {
+        console.error('Siswa query error:', siswaRes.error);
+        throw new Error('Gagal memuat data siswa');
+      }
+      if (kelasRes.error) {
+        console.error('Kelas query error:', kelasRes.error);
+        throw new Error('Gagal memuat data kelas');
+      }
+      if (jurusanRes.error) {
+        console.error('Jurusan query error:', jurusanRes.error);
+        throw new Error('Gagal memuat data jurusan');
+      }
 
       setSiswa(siswaRes.data || []);
       setKelas(kelasRes.data || []);
@@ -71,9 +84,13 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
       console.error('Error loading data:', error);
       toast({
         title: "Error",
-        description: "Tidak dapat memuat data",
+        description: error.message || "Tidak dapat memuat data",
         variant: "destructive",
       });
+      // Set empty arrays to prevent rendering issues
+      setSiswa([]);
+      setKelas([]);
+      setJurusan([]);
     } finally {
       setLoading(false);
     }

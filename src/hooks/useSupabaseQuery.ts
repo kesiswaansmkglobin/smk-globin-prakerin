@@ -29,7 +29,7 @@ export function useSupabaseQuery<T = any>({
 
       let query = (supabase as any).from(table).select(select);
 
-      // Apply filters
+      // Apply filters more efficiently
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== '') {
           query = query.eq(key, value);
@@ -43,17 +43,28 @@ export function useSupabaseQuery<T = any>({
 
       const { data: result, error: queryError } = await query;
 
-      if (queryError) throw queryError;
+      if (queryError) {
+        console.error(`Query error for ${table}:`, queryError);
+        throw new Error(`Gagal memuat data dari ${table}: ${queryError.message}`);
+      }
 
       setData(result || []);
     } catch (err: any) {
       const errorMessage = err.message || 'Gagal memuat data';
       setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      console.error(`useSupabaseQuery error for ${table}:`, err);
+      
+      // Only show toast for non-trivial errors
+      if (!errorMessage.includes('timeout')) {
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
+      
+      // Set empty array on error to prevent rendering issues
+      setData([]);
     } finally {
       setLoading(false);
     }

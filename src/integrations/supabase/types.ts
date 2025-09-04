@@ -294,6 +294,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_valid_api_request: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       verify_password: {
         Args: { hash: string; password: string }
         Returns: boolean

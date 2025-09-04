@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Users, Briefcase, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface DashboardContentProps {
   user: any;
@@ -24,21 +25,31 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
 
   const loadDashboardData = async () => {
     try {
-      // Load statistics
+      // Get current date for active prakerin calculation
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Load basic statistics first - simple and fast
       const [jurusanRes, penggunaRes, prakerinRes] = await Promise.all([
         supabase.from('jurusan').select('*', { count: 'exact' }),
-        supabase.from('users').select('*', { count: 'exact' }),
+        user?.role === 'admin' ? supabase.from('users').select('*', { count: 'exact' }) : Promise.resolve({ count: 0 }),
         supabase.from('prakerin').select('*', { count: 'exact' })
       ]);
+      
+      // Calculate active prakerin - simplified for now
+      const aktivePrakerinRes = await supabase
+        .from('prakerin')
+        .select('*', { count: 'exact' })
+        .lte('tanggal_mulai', today)
+        .gte('tanggal_selesai', today);
 
       setStats({
         totalJurusan: jurusanRes.count || 0,
         totalPengguna: user?.role === 'admin' ? (penggunaRes.count || 0) : 0,
         totalPrakerin: prakerinRes.count || 0,
-        aktivePrakerin: 0 // Will calculate based on current date
+        aktivePrakerin: aktivePrakerinRes.count || 0
       });
 
-      // Load recent prakerin data
+      // Load recent prakerin data - simplified
       const { data: prakerin } = await supabase
         .from('prakerin')
         .select('*, siswa(*, jurusan(nama))')
@@ -48,6 +59,14 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
       setRecentPrakerin(prakerin || []);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      // Set empty state on error to prevent infinite loading
+      setStats({
+        totalJurusan: 0,
+        totalPengguna: 0,
+        totalPrakerin: 0,
+        aktivePrakerin: 0
+      });
+      setRecentPrakerin([]);
     } finally {
       setLoading(false);
     }
@@ -128,11 +147,9 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Memuat data...
-            </div>
-          ) : recentPrakerin.length === 0 ? (
+            {loading ? (
+              <LoadingSpinner message="Memuat data dashboard..." />
+            ) : recentPrakerin.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Belum ada data prakerin
             </div>
