@@ -279,9 +279,20 @@ export type Database = {
           username: string
         }[]
       }
+      get_current_user_info: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_jurusan: string
+          user_role: string
+        }[]
+      }
       hash_password: {
         Args: { password: string }
         Returns: string
+      }
+      is_authenticated_school_staff: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       verify_password: {
         Args: { hash: string; password: string }
