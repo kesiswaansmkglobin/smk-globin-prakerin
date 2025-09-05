@@ -273,6 +273,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      allow_school_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       authenticate_user: {
         Args: { input_password: string; input_username: string }
         Returns: {
