@@ -269,6 +269,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      allow_authenticated_access: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       authenticate_user: {
         Args: { input_password: string; input_username: string }
         Returns: {
