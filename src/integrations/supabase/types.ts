@@ -290,6 +290,10 @@ export type Database = {
         Args: { password: string }
         Returns: string
       }
+      is_authenticated_school_personnel: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_authenticated_school_staff: {
         Args: Record<PropertyKey, never>
         Returns: boolean
