@@ -19,10 +19,18 @@ interface JurusanContentProps {
 const JurusanContent = ({ user }: JurusanContentProps) => {
   const { toast } = useToast();
 
-  // Use custom hooks for data fetching and mutations
-  const { data: jurusan, loading, refetch } = useSupabaseQuery<Jurusan>({
+  // Use custom hooks for data fetching and mutations with better error handling
+  const { data: jurusan, loading, error, refetch } = useSupabaseQuery<Jurusan>({
     table: 'jurusan',
-    orderBy: { column: 'created_at', ascending: false }
+    select: '*',
+    orderBy: { column: 'nama', ascending: true }
+  });
+
+  // Debug logging
+  console.log('JurusanContent state:', { 
+    jurusan: jurusan?.length || 0, 
+    loading, 
+    error 
   });
 
   const mutation = useSupabaseMutation({
@@ -136,15 +144,35 @@ const JurusanContent = ({ user }: JurusanContentProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <DataTable
-            data={jurusan}
-            columns={columns}
-            onEdit={canEdit ? openDialog : undefined}
-            onDelete={canEdit ? handleDelete : undefined}
-            loading={loading}
-            emptyMessage="Belum ada data jurusan"
-            canEdit={canEdit}
-          />
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+              Memuat data jurusan...
+            </div>
+          ) : error ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-destructive">Error: {error}</p>
+              <button 
+                onClick={() => {
+                  refetch();
+                  window.location.reload();
+                }}
+                className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+              >
+                Coba Lagi
+              </button>
+            </div>
+          ) : (
+            <DataTable
+              data={jurusan}
+              columns={columns}
+              onEdit={canEdit ? openDialog : undefined}
+              onDelete={canEdit ? handleDelete : undefined}
+              loading={loading}
+              emptyMessage="Belum ada data jurusan"
+              canEdit={canEdit}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

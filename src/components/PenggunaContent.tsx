@@ -17,18 +17,30 @@ interface PenggunaContentProps {
 }
 
 const PenggunaContent = ({ user }: PenggunaContentProps) => {
-  // Use optimized hooks for better performance
-  const { data: users = [], loading: usersLoading, refetch: refetchUsers } = useSupabaseQuery({
+  // Use optimized hooks for better performance with better error handling
+  const { data: users = [], loading: usersLoading, error: usersError, refetch: refetchUsers } = useSupabaseQuery({
     table: 'users',
+    select: '*',
     orderBy: { column: 'name', ascending: true }
   });
 
-  const { data: jurusan = [], loading: jurusanLoading } = useSupabaseQuery({
+  const { data: jurusan = [], loading: jurusanLoading, error: jurusanError } = useSupabaseQuery({
     table: 'jurusan',
+    select: '*', 
     orderBy: { column: 'nama', ascending: true }
   });
 
   const loading = usersLoading || jurusanLoading;
+  const hasError = usersError || jurusanError;
+
+  // Debug logging
+  console.log('PenggunaContent state:', { 
+    users: users.length, 
+    jurusan: jurusan.length, 
+    loading, 
+    usersError, 
+    jurusanError 
+  });
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -257,7 +269,21 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
         <CardContent>
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">
-              Memuat data...
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+              Memuat data pengguna...
+            </div>
+          ) : hasError ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-destructive">Error: {usersError || jurusanError}</p>
+              <button 
+                onClick={() => {
+                  refetchUsers();
+                  window.location.reload();
+                }}
+                className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+              >
+                Coba Lagi
+              </button>
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">

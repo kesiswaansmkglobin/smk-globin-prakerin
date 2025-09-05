@@ -27,6 +27,8 @@ export function useSupabaseQuery<T = any>({
       setLoading(true);
       setError(null);
 
+      console.log(`Fetching data from ${table}...`);
+      
       let query = (supabase as any).from(table).select(select);
 
       // Apply filters more efficiently
@@ -38,37 +40,38 @@ export function useSupabaseQuery<T = any>({
 
       // Apply ordering
       if (orderBy) {
-        query = query.order(orderBy.column, { ascending: orderBy.ascending ?? false });
+        query = query.order(orderBy.column, { ascending: orderBy.ascending ?? true });
       }
 
       const { data: result, error: queryError } = await query;
+
+      console.log(`Query result for ${table}:`, { result, queryError });
 
       if (queryError) {
         console.error(`Query error for ${table}:`, queryError);
         throw new Error(`Gagal memuat data dari ${table}: ${queryError.message}`);
       }
 
-      setData(result || []);
+      setData((result as T[]) || []);
+      console.log(`Successfully loaded ${((result as T[]) || []).length} items from ${table}`);
     } catch (err: any) {
       const errorMessage = err.message || 'Gagal memuat data';
       setError(errorMessage);
       console.error(`useSupabaseQuery error for ${table}:`, err);
       
-      // Only show toast for non-trivial errors
-      if (!errorMessage.includes('timeout')) {
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive"
-        });
-      }
+      // Always show meaningful errors
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
       
       // Set empty array on error to prevent rendering issues
       setData([]);
     } finally {
       setLoading(false);
     }
-  }, [table, select, JSON.stringify(filters), orderBy, toast]);
+  }, [table, select, JSON.stringify(filters), JSON.stringify(orderBy), toast]);
 
   useEffect(() => {
     fetchData();
