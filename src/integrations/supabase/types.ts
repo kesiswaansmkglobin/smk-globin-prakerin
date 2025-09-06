@@ -277,6 +277,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      armor: {
+        Args: { "": string }
+        Returns: string
+      }
       authenticate_user: {
         Args: { input_password: string; input_username: string }
         Returns: {
@@ -286,6 +290,22 @@ export type Database = {
           role: string
           username: string
         }[]
+      }
+      dearmor: {
+        Args: { "": string }
+        Returns: string
+      }
+      gen_random_bytes: {
+        Args: { "": number }
+        Returns: string
+      }
+      gen_random_uuid: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      gen_salt: {
+        Args: { "": string }
+        Returns: string
       }
       get_current_user_info: {
         Args: Record<PropertyKey, never>
@@ -309,6 +329,14 @@ export type Database = {
       is_valid_api_request: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      pgp_armor_headers: {
+        Args: { "": string }
+        Returns: Record<string, unknown>[]
+      }
+      pgp_key_id: {
+        Args: { "": string }
+        Returns: string
       }
       verify_password: {
         Args: { hash: string; password: string }
