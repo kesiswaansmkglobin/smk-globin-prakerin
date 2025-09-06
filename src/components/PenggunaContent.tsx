@@ -56,13 +56,18 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
     e.preventDefault();
     
     try {
+      console.log('Form submission started');
+      console.log('Form data:', { ...formData, password: '[HIDDEN]' });
+      
       if (editingUser) {
         // For updates, use RPC to properly hash password if provided
         if (formData.password) {
-          const { error } = await supabase.rpc('hash_password', {
-            password: formData.password
-          });
-          if (error) throw error;
+          console.log('Hashing password for update');
+          const { data: hashedPassword, error: hashError } = await supabase
+            .rpc('hash_password', { password: formData.password });
+          
+          console.log('Hash result:', { hashedPassword: hashedPassword ? '[HASHED]' : null, hashError });
+          if (hashError) throw hashError;
         }
         
         const updateData = { ...formData };
@@ -70,12 +75,15 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
           delete updateData.password; // Don't update password if empty
         } else {
           // Hash the password before updating
+          console.log('Hashing password for update (second call)');
           const { data: hashedPassword, error: hashError } = await supabase
             .rpc('hash_password', { password: updateData.password });
+          console.log('Hash result for update:', { hashedPassword: hashedPassword ? '[HASHED]' : null, hashError });
           if (hashError) throw hashError;
           updateData.password = hashedPassword;
         }
 
+        console.log('Updating user with data:', { ...updateData, password: updateData.password ? '[HASHED]' : undefined });
         const { error } = await supabase
           .from('users')
           .update(updateData)
@@ -89,10 +97,17 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
         });
       } else {
         // For new users, hash the password first
+        console.log('Hashing password for new user');
         const { data: hashedPassword, error: hashError } = await supabase
           .rpc('hash_password', { password: formData.password });
-        if (hashError) throw hashError;
+          
+        console.log('Hash result for new user:', { hashedPassword: hashedPassword ? '[HASHED]' : null, hashError });
+        if (hashError) {
+          console.error('Hash error details:', hashError);
+          throw hashError;
+        }
 
+        console.log('Inserting new user');
         const { error } = await supabase
           .from('users')
           .insert([{ 
@@ -101,6 +116,7 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
             role: 'kaprog' 
           }]);
 
+        console.log('Insert result:', { error });
         if (error) throw error;
 
         toast({
@@ -114,6 +130,7 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
       setEditingUser(null);
       refetchUsers(); // Use refetch instead of loadData
     } catch (error) {
+      console.error('Submit error:', error);
       toast({
         title: "Error",
         description: error.message || "Terjadi kesalahan",
