@@ -46,21 +46,33 @@ export function useAuth() {
       });
 
       if (error) {
-        // If Supabase auth fails, check for Kaprog accounts using secure authentication
-        const { data: users, error: dbError } = await supabase
-          .rpc('authenticate_user', {
-            input_username: username,
-            input_password: password
-          });
+        // If Supabase auth fails, check for Kaprog accounts using secure edge function
+        const response = await fetch('https://xjnswzidbgxqdxuwpviy.supabase.co/functions/v1/authenticate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqbnN3emlkYmd4cWR4dXdwdml5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzQ2MTksImV4cCI6MjA3MjA1MDYxOX0.9AOmeU4GVDeXImXeBHXWVJTIESXwftBkSwo4esnhxFg'
+          },
+          body: JSON.stringify({
+            username: username,
+            password: password
+          })
+        });
 
-        if (dbError || !users || users.length === 0) {
+        if (!response.ok) {
           throw new Error('Username atau password salah');
+        }
+
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Username atau password salah');
         }
 
         // Store Kaprog user data
         const userData: AuthUser = {
-          ...users[0],
-          role: users[0].role as 'admin' | 'kaprog'
+          ...result.user,
+          role: result.user.role as 'admin' | 'kaprog'
         };
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);

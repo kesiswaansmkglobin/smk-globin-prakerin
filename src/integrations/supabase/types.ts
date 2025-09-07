@@ -326,6 +326,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      is_authenticated_school_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_valid_api_request: {
         Args: Record<PropertyKey, never>
         Returns: boolean
