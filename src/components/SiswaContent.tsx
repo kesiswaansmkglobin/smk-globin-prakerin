@@ -28,14 +28,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
     nama: '',
     kelas_id: '',
     jurusan_id: '',
-    jenis_kelamin: '',
-    tempat_lahir: '',
-    tanggal_lahir: '',
-    alamat: '',
-    telepon: '',
-    email: '',
-    nama_orangtua: '',
-    telepon_orangtua: ''
+    jenis_kelamin: ''
   });
   const { toast } = useToast();
 
@@ -144,14 +137,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
       nama: item.nama,
       kelas_id: item.kelas_id,
       jurusan_id: item.jurusan_id,
-      jenis_kelamin: item.jenis_kelamin || '',
-      tempat_lahir: item.tempat_lahir || '',
-      tanggal_lahir: item.tanggal_lahir || '',
-      alamat: item.alamat || '',
-      telepon: item.telepon || '',
-      email: item.email || '',
-      nama_orangtua: item.nama_orangtua || '',
-      telepon_orangtua: item.telepon_orangtua || ''
+      jenis_kelamin: item.jenis_kelamin || ''
     });
     setDialogOpen(true);
   };
@@ -189,14 +175,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
       nama: '',
       kelas_id: '',
       jurusan_id: '',
-      jenis_kelamin: '',
-      tempat_lahir: '',
-      tanggal_lahir: '',
-      alamat: '',
-      telepon: '',
-      email: '',
-      nama_orangtua: '',
-      telepon_orangtua: ''
+      jenis_kelamin: ''
     });
     setEditingSiswa(null);
     setDialogOpen(false);
@@ -309,107 +288,20 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="jenis_kelamin">Jenis Kelamin</Label>
-                        <Select
-                          value={formData.jenis_kelamin}
-                          onValueChange={(value) => setFormData(prev => ({ ...prev, jenis_kelamin: value }))}
-                        >
-                          <SelectTrigger className="bg-input/50 border-border/50">
-                            <SelectValue placeholder="Pilih jenis kelamin" />
-                          </SelectTrigger>
-                          <SelectContent className="card-gradient border-border/50">
-                            <SelectItem value="L">Laki-laki</SelectItem>
-                            <SelectItem value="P">Perempuan</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="tempat_lahir">Tempat Lahir</Label>
-                        <Input
-                          id="tempat_lahir"
-                          name="tempat_lahir"
-                          value={formData.tempat_lahir}
-                          onChange={handleChange}
-                          placeholder="Tempat lahir"
-                          className="bg-input/50 border-border/50"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="tanggal_lahir">Tanggal Lahir</Label>
-                        <Input
-                          id="tanggal_lahir"
-                          name="tanggal_lahir"
-                          type="date"
-                          value={formData.tanggal_lahir}
-                          onChange={handleChange}
-                          className="bg-input/50 border-border/50"
-                        />
-                      </div>
-                    </div>
-
                     <div>
-                      <Label htmlFor="alamat">Alamat</Label>
-                      <Input
-                        id="alamat"
-                        name="alamat"
-                        value={formData.alamat}
-                        onChange={handleChange}
-                        placeholder="Masukkan alamat"
-                        className="bg-input/50 border-border/50"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="telepon">Telepon</Label>
-                        <Input
-                          id="telepon"
-                          name="telepon"
-                          value={formData.telepon}
-                          onChange={handleChange}
-                          placeholder="Nomor telepon"
-                          className="bg-input/50 border-border/50"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          placeholder="Email siswa"
-                          className="bg-input/50 border-border/50"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="nama_orangtua">Nama Orangtua</Label>
-                        <Input
-                          id="nama_orangtua"
-                          name="nama_orangtua"
-                          value={formData.nama_orangtua}
-                          onChange={handleChange}
-                          placeholder="Nama orangtua/wali"
-                          className="bg-input/50 border-border/50"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="telepon_orangtua">Telepon Orangtua</Label>
-                        <Input
-                          id="telepon_orangtua"
-                          name="telepon_orangtua"
-                          value={formData.telepon_orangtua}
-                          onChange={handleChange}
-                          placeholder="Telepon orangtua"
-                          className="bg-input/50 border-border/50"
-                        />
-                      </div>
+                      <Label htmlFor="jenis_kelamin">Jenis Kelamin</Label>
+                      <Select
+                        value={formData.jenis_kelamin}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, jenis_kelamin: value }))}
+                      >
+                        <SelectTrigger className="bg-input/50 border-border/50">
+                          <SelectValue placeholder="Pilih jenis kelamin" />
+                        </SelectTrigger>
+                        <SelectContent className="card-gradient border-border/50">
+                          <SelectItem value="L">Laki-laki</SelectItem>
+                          <SelectItem value="P">Perempuan</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="flex justify-end space-x-2">
