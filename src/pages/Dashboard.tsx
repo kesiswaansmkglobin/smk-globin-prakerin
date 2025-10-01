@@ -58,27 +58,7 @@ const Dashboard = () => {
     return null;
   }
 
-  // Simple layout for Kaprog (with sidebar but limited menu)
-  if (user.role === 'kaprog') {
-    return (
-      <div className="min-h-screen bg-background flex">
-        <Sidebar 
-          activeMenu={activeMenu} 
-          setActiveMenu={setActiveMenu}
-          user={user}
-          collapsed={sidebarCollapsed}
-          setCollapsed={setSidebarCollapsed}
-        />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
-            {renderContent()}
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // Full admin layout with sidebar
+  // Standard layout for all users (admin, kaprog, kepala_sekolah)
   return (
     <div className="min-h-screen bg-background flex">
       <Sidebar 

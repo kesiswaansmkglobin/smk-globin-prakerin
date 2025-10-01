@@ -54,6 +54,11 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
       return ['dashboard', 'siswa', 'prakerin', 'laporan'].includes(item.id);
     }
     
+    // For kepala_sekolah, show all menus except admin-only
+    if (user?.role === 'kepala_sekolah') {
+      return !item.adminOnly;
+    }
+    
     return true;
   });
 
@@ -97,7 +102,11 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
           <div className="mb-6 p-3 rounded-lg bg-primary/10 border border-primary/20">
             <p className="text-sm font-medium">{user?.name || 'Admin'}</p>
             <p className="text-xs text-muted-foreground">
-              {user?.role === 'admin' ? 'Administrator' : `Kaprog ${user?.jurusan}`}
+              {user?.role === 'admin' 
+                ? 'Administrator' 
+                : user?.role === 'kepala_sekolah'
+                ? 'Kepala Sekolah'
+                : `Kaprog ${user?.jurusan}`}
             </p>
           </div>
         )}

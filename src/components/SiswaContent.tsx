@@ -188,7 +188,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
     }));
   };
 
-  const canEdit = user?.role === 'admin';
+  const canEdit = user?.role === 'admin' || user?.role === 'kepala_sekolah';
 
   return (
     <div className="space-y-6">

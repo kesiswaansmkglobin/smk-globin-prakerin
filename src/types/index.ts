@@ -3,7 +3,7 @@ export interface User {
   id: string;
   name: string;
   username: string;
-  role: 'admin' | 'kaprog';
+  role: 'admin' | 'kaprog' | 'kepala_sekolah';
   jurusan: string;
   created_at: string;
   updated_at: string;

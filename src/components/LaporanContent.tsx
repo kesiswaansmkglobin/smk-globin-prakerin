@@ -28,10 +28,10 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
     rataRataNilai: 0
   });
   const [filters, setFilters] = useState({
-    jurusan: user?.role === 'kaprog' ? user.jurusan : '',
+    jurusan: user?.role === 'kaprog' ? user.jurusan : 'all',
     tanggal_mulai: '',
     tanggal_selesai: '',
-    status: ''
+    status: 'all'
   });
   const { toast } = useToast();
 
@@ -59,7 +59,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
         `)
         .order('created_at', { ascending: false });
 
-      // Filter by user's jurusan if not admin
+      // Filter by user's jurusan if kaprog (not admin or kepala_sekolah)
       if (user?.role === 'kaprog') {
         // First get the jurusan ID for the kaprog user
         const { data: jurusanData } = await supabase
@@ -322,7 +322,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            {user?.role === 'admin' && (
+            {(user?.role === 'admin' || user?.role === 'kepala_sekolah') && (
               <div className="space-y-2">
                 <Label htmlFor="filter-jurusan">Jurusan</Label>
                 <Select 

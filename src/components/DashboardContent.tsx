@@ -31,7 +31,7 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
       // Load basic statistics first - simple and fast
       const [jurusanRes, penggunaRes, prakerinRes] = await Promise.all([
         supabase.from('jurusan').select('*', { count: 'exact' }),
-        user?.role === 'admin' ? supabase.from('users').select('*', { count: 'exact' }) : Promise.resolve({ count: 0 }),
+        (user?.role === 'admin' || user?.role === 'kepala_sekolah') ? supabase.from('users').select('*', { count: 'exact' }) : Promise.resolve({ count: 0 }),
         supabase.from('prakerin').select('*', { count: 'exact' })
       ]);
       
@@ -44,7 +44,7 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
 
       setStats({
         totalJurusan: jurusanRes.count || 0,
-        totalPengguna: user?.role === 'admin' ? (penggunaRes.count || 0) : 0,
+        totalPengguna: (user?.role === 'admin' || user?.role === 'kepala_sekolah') ? (penggunaRes.count || 0) : 0,
         totalPrakerin: prakerinRes.count || 0,
         aktivePrakerin: aktivePrakerinRes.count || 0
       });
@@ -93,12 +93,13 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
         <p className="text-muted-foreground">
           Selamat datang, {user?.name || 'Admin'}! 
           {user?.role === 'kaprog' && ` - Kepala Program ${user.jurusan}`}
+          {user?.role === 'kepala_sekolah' && ` - Kepala Sekolah`}
         </p>
       </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {user?.role === 'admin' && (
+        {(user?.role === 'admin' || user?.role === 'kepala_sekolah') && (
           <StatCard
             title="Total Jurusan"
             value={stats.totalJurusan}

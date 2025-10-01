@@ -258,7 +258,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
     return new Date(dateString).toLocaleDateString('id-ID');
   };
 
-  const canEdit = user?.role === 'admin' || user?.role === 'kaprog';
+  const canEdit = user?.role === 'admin' || user?.role === 'kaprog' || user?.role === 'kepala_sekolah';
 
   const getSelectedSiswaData = () => {
     return siswaList.find(s => s.id === selectedSiswa);
