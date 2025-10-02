@@ -11,6 +11,8 @@ import { Plus, Edit, Trash2, Briefcase } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+import { canEditPrakerin } from '@/utils/permissions';
+
 interface PrakerinContentProps {
   user: any;
 }
@@ -258,7 +260,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
     return new Date(dateString).toLocaleDateString('id-ID');
   };
 
-  const canEdit = user?.role === 'admin' || user?.role === 'kaprog' || user?.role === 'kepala_sekolah';
+  const canEdit = canEditPrakerin(user);
 
   const getSelectedSiswaData = () => {
     return siswaList.find(s => s.id === selectedSiswa);

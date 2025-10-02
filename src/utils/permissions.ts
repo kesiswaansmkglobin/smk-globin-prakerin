@@ -1,0 +1,67 @@
+import type { User } from '@/types';
+
+/**
+ * Check if user can edit data sekolah
+ * Only admin can edit
+ */
+export const canEditSekolah = (user: User | null): boolean => {
+  return user?.role === 'admin';
+};
+
+/**
+ * Check if user can edit data jurusan
+ * Only admin can edit
+ */
+export const canEditJurusan = (user: User | null): boolean => {
+  return user?.role === 'admin';
+};
+
+/**
+ * Check if user can edit data kelas
+ * Only admin can edit
+ */
+export const canEditKelas = (user: User | null): boolean => {
+  return user?.role === 'admin';
+};
+
+/**
+ * Check if user can edit data siswa
+ * Admin and kaprog can edit
+ */
+export const canEditSiswa = (user: User | null): boolean => {
+  return user?.role === 'admin' || user?.role === 'kaprog';
+};
+
+/**
+ * Check if user can edit data prakerin
+ * Admin and kaprog can edit
+ */
+export const canEditPrakerin = (user: User | null): boolean => {
+  return user?.role === 'admin' || user?.role === 'kaprog';
+};
+
+/**
+ * Check if user can download reports
+ * All authenticated users can download
+ */
+export const canDownloadReports = (user: User | null): boolean => {
+  return !!user;
+};
+
+/**
+ * Check if user should see filtered data by jurusan
+ * Kaprog can only see their own jurusan
+ */
+export const shouldFilterByJurusan = (user: User | null): boolean => {
+  return user?.role === 'kaprog';
+};
+
+/**
+ * Get filtered jurusan for kaprog
+ */
+export const getFilteredJurusan = (user: User | null, allJurusan: any[]): any[] => {
+  if (!shouldFilterByJurusan(user)) {
+    return allJurusan;
+  }
+  return allJurusan.filter(j => j.nama === user?.jurusan);
+};

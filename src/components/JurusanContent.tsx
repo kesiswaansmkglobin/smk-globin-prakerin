@@ -10,6 +10,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { DataTable } from '@/components/common/DataTable';
+import { canEditJurusan } from '@/utils/permissions';
 import type { Jurusan } from '@/types';
 
 interface JurusanContentProps {
@@ -83,7 +84,7 @@ const JurusanContent = ({ user }: JurusanContentProps) => {
     }
   ];
 
-  const canEdit = user?.role === 'admin' || user?.role === 'kepala_sekolah';
+  const canEdit = canEditJurusan(user);
 
   return (
     <div className="space-y-6">

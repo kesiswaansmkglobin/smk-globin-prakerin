@@ -10,12 +10,14 @@ import { Plus, Edit, Trash2, GraduationCap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+import { canEditKelas } from '@/utils/permissions';
+
 interface KelasContentProps {
   user: any;
 }
 
 const KelasContent = ({ user }: KelasContentProps) => {
-  const canEdit = user?.role === 'admin';
+  const canEdit = canEditKelas(user);
   const [kelas, setKelas] = useState([]);
   const [jurusan, setJurusan] = useState([]);
   const [loading, setLoading] = useState(true);

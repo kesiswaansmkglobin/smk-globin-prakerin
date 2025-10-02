@@ -9,12 +9,14 @@ import { Plus, Edit, Trash2, School } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+import { canEditSekolah } from '@/utils/permissions';
+
 interface SekolahContentProps {
   user: any;
 }
 
 const SekolahContent = ({ user }: SekolahContentProps) => {
-  const canEdit = user?.role === 'admin';
+  const canEdit = canEditSekolah(user);
   const [sekolah, setSekolah] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

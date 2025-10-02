@@ -11,12 +11,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ImportSiswaDialog } from '@/components/ImportSiswaDialog';
 
+import { canEditSiswa, shouldFilterByJurusan, getFilteredJurusan } from '@/utils/permissions';
+
 interface SiswaContentProps {
   user: any;
 }
 
 const SiswaContent = ({ user }: SiswaContentProps) => {
-  const canEdit = user?.role === 'admin' || user?.role === 'kaprog';
+  const canEdit = canEditSiswa(user);
   
   const [siswa, setSiswa] = useState([]);
   const [filteredSiswa, setFilteredSiswa] = useState([]);
@@ -78,7 +80,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
       setJurusan(jurusanRes.data || []);
       
       // Filter siswa untuk kaprog berdasarkan jurusan
-      if (user?.role === 'kaprog' && user.jurusan) {
+      if (shouldFilterByJurusan(user)) {
         const filteredData = (siswaRes.data || []).filter((s: any) => 
           s.jurusan?.nama === user.jurusan
         );
@@ -203,17 +205,14 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
   };
   
   // Filter kelas dan jurusan untuk kaprog
-  const filteredKelas = user?.role === 'kaprog' && user.jurusan
+  const filteredKelas = shouldFilterByJurusan(user)
     ? kelas.filter((k: any) => {
-        // Find jurusan_id for user's jurusan
         const userJurusanData = jurusan.find((j: any) => j.nama === user.jurusan);
         return k.jurusan_id === userJurusanData?.id;
       })
     : kelas;
     
-  const filteredJurusan = user?.role === 'kaprog' && user.jurusan
-    ? jurusan.filter((j: any) => j.nama === user.jurusan)
-    : jurusan;
+  const filteredJurusan = getFilteredJurusan(user, jurusan);
 
   return (
     <div className="space-y-6">
