@@ -14,6 +14,7 @@ interface SekolahContentProps {
 }
 
 const SekolahContent = ({ user }: SekolahContentProps) => {
+  const canEdit = user?.role === 'admin';
   const [sekolah, setSekolah] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -159,13 +160,14 @@ const SekolahContent = ({ user }: SekolahContentProps) => {
           <p className="text-muted-foreground">Kelola informasi sekolah</p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="glow-effect" onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" />
-              Tambah Sekolah
-            </Button>
-          </DialogTrigger>
+        {canEdit && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="glow-effect" onClick={resetForm}>
+                <Plus className="mr-2 h-4 w-4" />
+                Tambah Sekolah
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -236,6 +238,7 @@ const SekolahContent = ({ user }: SekolahContentProps) => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card className="card-gradient border-border/50">
@@ -262,7 +265,7 @@ const SekolahContent = ({ user }: SekolahContentProps) => {
                   <TableHead>Alamat</TableHead>
                   <TableHead>Telepon</TableHead>
                   <TableHead>Kepala Sekolah</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  {canEdit && <TableHead className="text-right">Aksi</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -272,25 +275,27 @@ const SekolahContent = ({ user }: SekolahContentProps) => {
                     <TableCell>{item.alamat || '-'}</TableCell>
                     <TableCell>{item.telepon || '-'}</TableCell>
                     <TableCell>{item.kepala_sekolah || '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(item)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(item.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {canEdit && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(item)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(item.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

@@ -15,6 +15,7 @@ interface KelasContentProps {
 }
 
 const KelasContent = ({ user }: KelasContentProps) => {
+  const canEdit = user?.role === 'admin';
   const [kelas, setKelas] = useState([]);
   const [jurusan, setJurusan] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -171,13 +172,14 @@ const KelasContent = ({ user }: KelasContentProps) => {
           <p className="text-muted-foreground">Kelola data kelas sekolah</p>
         </div>
 
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="glow-effect" onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" />
-              Tambah Kelas
-            </Button>
-          </DialogTrigger>
+        {canEdit && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="glow-effect" onClick={resetForm}>
+                <Plus className="mr-2 h-4 w-4" />
+                Tambah Kelas
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
@@ -251,6 +253,7 @@ const KelasContent = ({ user }: KelasContentProps) => {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card className="card-gradient border-border/50">
@@ -277,7 +280,7 @@ const KelasContent = ({ user }: KelasContentProps) => {
                   <TableHead>Jurusan</TableHead>
                   <TableHead>Tingkat</TableHead>
                   <TableHead>Wali Kelas</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  {canEdit && <TableHead className="text-right">Aksi</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -291,25 +294,27 @@ const KelasContent = ({ user }: KelasContentProps) => {
                        item.tingkat === 12 ? 'Kelas XII' : '-'}
                     </TableCell>
                     <TableCell>{item.wali_kelas || '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(item)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(item.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {canEdit && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(item)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(item.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

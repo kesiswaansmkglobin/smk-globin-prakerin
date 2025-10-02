@@ -16,7 +16,10 @@ interface SiswaContentProps {
 }
 
 const SiswaContent = ({ user }: SiswaContentProps) => {
+  const canEdit = user?.role === 'admin' || user?.role === 'kaprog';
+  
   const [siswa, setSiswa] = useState([]);
+  const [filteredSiswa, setFilteredSiswa] = useState([]);
   const [kelas, setKelas] = useState([]);
   const [jurusan, setJurusan] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +76,16 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
       setSiswa(siswaRes.data || []);
       setKelas(kelasRes.data || []);
       setJurusan(jurusanRes.data || []);
+      
+      // Filter siswa untuk kaprog berdasarkan jurusan
+      if (user?.role === 'kaprog' && user.jurusan) {
+        const filteredData = (siswaRes.data || []).filter((s: any) => 
+          s.jurusan?.nama === user.jurusan
+        );
+        setFilteredSiswa(filteredData);
+      } else {
+        setFilteredSiswa(siswaRes.data || []);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -82,6 +95,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
       });
       // Set empty arrays to prevent rendering issues
       setSiswa([]);
+      setFilteredSiswa([]);
       setKelas([]);
       setJurusan([]);
     } finally {
@@ -187,8 +201,19 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
       [e.target.name]: e.target.value
     }));
   };
-
-  const canEdit = user?.role === 'admin' || user?.role === 'kepala_sekolah';
+  
+  // Filter kelas dan jurusan untuk kaprog
+  const filteredKelas = user?.role === 'kaprog' && user.jurusan
+    ? kelas.filter((k: any) => {
+        // Find jurusan_id for user's jurusan
+        const userJurusanData = jurusan.find((j: any) => j.nama === user.jurusan);
+        return k.jurusan_id === userJurusanData?.id;
+      })
+    : kelas;
+    
+  const filteredJurusan = user?.role === 'kaprog' && user.jurusan
+    ? jurusan.filter((j: any) => j.nama === user.jurusan)
+    : jurusan;
 
   return (
     <div className="space-y-6">
@@ -260,7 +285,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
                             <SelectValue placeholder="Pilih kelas" />
                           </SelectTrigger>
                           <SelectContent className="card-gradient border-border/50">
-                            {kelas.map((item: any) => (
+                            {filteredKelas.map((item: any) => (
                               <SelectItem key={item.id} value={item.id}>
                                 {item.nama}
                               </SelectItem>
@@ -278,7 +303,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
                             <SelectValue placeholder="Pilih jurusan" />
                           </SelectTrigger>
                           <SelectContent className="card-gradient border-border/50">
-                            {jurusan.map((item: any) => (
+                            {filteredJurusan.map((item: any) => (
                               <SelectItem key={item.id} value={item.id}>
                                 {item.nama}
                               </SelectItem>
@@ -332,9 +357,11 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
             <div className="text-center py-8 text-muted-foreground">
               Memuat data...
             </div>
-          ) : siswa.length === 0 ? (
+          ) : filteredSiswa.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Belum ada data siswa
+              {user?.role === 'kaprog' 
+                ? `Belum ada data siswa jurusan ${user.jurusan}` 
+                : 'Belum ada data siswa'}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -351,7 +378,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {siswa.map((item: any, index) => (
+                  {filteredSiswa.map((item: any, index) => (
                     <TableRow key={item.id}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell className="font-medium">{item.nis}</TableCell>

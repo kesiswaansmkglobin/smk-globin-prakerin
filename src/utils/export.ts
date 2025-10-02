@@ -92,9 +92,20 @@ export function exportToPDF<T>(
 }
 
 function getValue<T>(item: T, key: string): any {
-  return key.includes('.') 
-    ? key.split('.').reduce((obj, k) => obj?.[k], item as any)
-    : (item as any)[key];
+  if (!key.includes('.')) {
+    return (item as any)[key];
+  }
+  
+  // Handle nested properties like 'siswa.nama' or 'siswa.jurusan.nama'
+  const keys = key.split('.');
+  let value: any = item;
+  
+  for (const k of keys) {
+    if (value == null) return undefined;
+    value = value[k];
+  }
+  
+  return value;
 }
 
 function downloadFile(content: string, filename: string, mimeType: string): void {
