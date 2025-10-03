@@ -291,6 +291,10 @@ export type Database = {
           username: string
         }[]
       }
+      can_access_jurusan: {
+        Args: { jurusan_name: string; user_id: string }
+        Returns: boolean
+      }
       dearmor: {
         Args: { "": string }
         Returns: string
@@ -314,9 +318,21 @@ export type Database = {
           user_role: string
         }[]
       }
+      get_user_jurusan: {
+        Args: { user_id: string }
+        Returns: string
+      }
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: string
+      }
       hash_password: {
         Args: { password: string }
         Returns: string
+      }
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
       }
       is_authenticated_school_personnel: {
         Args: Record<PropertyKey, never>
@@ -328,6 +344,14 @@ export type Database = {
       }
       is_authenticated_school_user: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_kaprog: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      is_kepala_sekolah: {
+        Args: { user_id: string }
         Returns: boolean
       }
       is_valid_api_request: {
