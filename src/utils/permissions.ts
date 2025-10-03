@@ -26,10 +26,10 @@ export const canEditKelas = (user: User | null): boolean => {
 
 /**
  * Check if user can edit data siswa
- * Admin and kaprog can edit
+ * Only admin can edit (kaprog and kepala_sekolah are view-only)
  */
 export const canEditSiswa = (user: User | null): boolean => {
-  return user?.role === 'admin' || user?.role === 'kaprog';
+  return user?.role === 'admin';
 };
 
 /**

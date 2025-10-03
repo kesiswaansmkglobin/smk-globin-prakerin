@@ -72,6 +72,17 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
 
   const loadData = async () => {
     try {
+      // Get user's jurusan_id first if kaprog
+      let userJurusanId: string | null = null;
+      if (user?.role === 'kaprog') {
+        const { data: jurusanData } = await supabase
+          .from('jurusan')
+          .select('id')
+          .eq('nama', user.jurusan)
+          .single();
+        userJurusanId = jurusanData?.id || null;
+      }
+
       let prakerinQuery = supabase
         .from('prakerin')
         .select(`
@@ -79,31 +90,32 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
           siswa!inner(
             nis,
             nama,
+            jurusan_id,
             kelas!inner(nama),
             jurusan!inner(nama)
           )
         `)
         .order('created_at', { ascending: false });
 
-      // Filter by user's jurusan if not admin
-      if (user?.role === 'kaprog') {
-        prakerinQuery = prakerinQuery.eq('siswa.jurusan.nama', user.jurusan);
+      // Filter by user's jurusan if kaprog
+      if (user?.role === 'kaprog' && userJurusanId) {
+        prakerinQuery = prakerinQuery.eq('siswa.jurusan_id', userJurusanId);
       }
 
       let kelasQuery = supabase
         .from('kelas')
-        .select('id, nama, jurusan(nama)')
+        .select('id, nama, jurusan_id, jurusan(nama)')
         .order('nama');
 
       let siswaQuery = supabase
         .from('siswa')
-        .select('id, nis, nama, kelas(nama), jurusan(nama)')
+        .select('id, nis, nama, jurusan_id, kelas(nama), jurusan(nama)')
         .order('nama');
 
-      // Filter by user's jurusan if not admin
-      if (user?.role === 'kaprog') {
-        kelasQuery = kelasQuery.eq('jurusan.nama', user.jurusan);
-        siswaQuery = siswaQuery.eq('jurusan.nama', user.jurusan);
+      // Filter by user's jurusan if kaprog
+      if (user?.role === 'kaprog' && userJurusanId) {
+        kelasQuery = kelasQuery.eq('jurusan_id', userJurusanId);
+        siswaQuery = siswaQuery.eq('jurusan_id', userJurusanId);
       }
 
       const [prakerinRes, kelasRes, siswaRes] = await Promise.all([
