@@ -69,6 +69,18 @@ export function useAuth() {
           throw new Error(result.error || 'Username atau password salah');
         }
 
+        // If we got a session from the edge function, use it
+        if (result.session?.properties?.access_token) {
+          const { error: setSessionError } = await supabase.auth.setSession({
+            access_token: result.session.properties.access_token,
+            refresh_token: result.session.properties.refresh_token,
+          });
+          
+          if (setSessionError) {
+            console.error('Failed to set session:', setSessionError);
+          }
+        }
+
         // Store Kaprog user data
         const userData: AuthUser = {
           ...result.user,
@@ -110,10 +122,8 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      // Sign out from Supabase if admin
-      if (user?.role === 'admin') {
-        await supabase.auth.signOut();
-      }
+      // Sign out from Supabase for both admin and kaprog (they both have sessions now)
+      await supabase.auth.signOut();
       
       // Clear local storage
       localStorage.removeItem('user');
@@ -126,7 +136,7 @@ export function useAuth() {
       setUser(null);
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [navigate]);
 
   const checkAuth = useCallback(() => {
     if (!user) {

@@ -157,8 +157,43 @@ serve(async (req) => {
     // Authentication successful - clear failed attempts
     clearFailedAttempts(clientIP)
 
-    // Return user data (without password)
     const userData = users[0]
+    
+    // Create or get Supabase Auth session for this user
+    // This generates a proper JWT token for RLS policies
+    const authEmail = `${userData.username}@internal.smkglobin.local`
+    
+    // Check if auth user exists, if not create one
+    const { data: existingUser } = await supabase.auth.admin.getUserByEmail(authEmail)
+    
+    if (!existingUser) {
+      // Create auth user with random password (they'll use custom login)
+      const randomPassword = crypto.randomUUID()
+      await supabase.auth.admin.createUser({
+        email: authEmail,
+        password: randomPassword,
+        email_confirm: true,
+        user_metadata: {
+          custom_user_id: userData.id,
+          name: userData.name,
+          role: userData.role,
+          jurusan: userData.jurusan
+        }
+      })
+    }
+    
+    // Generate auth session for the user
+    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: authEmail,
+    })
+    
+    if (sessionError) {
+      console.error('Session generation error:', sessionError)
+      // Still return success with user data, frontend will handle gracefully
+    }
+
+    // Return user data with session token
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -168,7 +203,8 @@ serve(async (req) => {
           username: userData.username,
           role: userData.role,
           jurusan: userData.jurusan
-        }
+        },
+        session: sessionData
       }),
       {
         status: 200,

@@ -273,10 +273,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      allow_school_access: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
       armor: {
         Args: { "": string }
         Returns: string
@@ -343,6 +339,10 @@ export type Database = {
         Returns: boolean
       }
       is_authenticated_school_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_authenticated_user: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
