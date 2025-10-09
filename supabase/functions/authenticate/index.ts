@@ -193,19 +193,30 @@ serve(async (req) => {
       // Still return success with user data, frontend will handle gracefully
     }
 
-    // Create role entry in user_roles table for secure role management
-    const { error: roleError } = await supabase
-      .from('user_roles')
-      .upsert({
-        user_id: userData.id,
-        role: userData.role,
-        jurusan: userData.jurusan
-      }, {
-        onConflict: 'user_id,role'
-      })
-    
-    if (roleError) {
-      console.error('Error creating role entry:', roleError)
+    // Map role to the Supabase Auth user id (not custom table id)
+    const { data: authUserLookup, error: authLookupError } = await supabase.auth.admin.getUserByEmail(authEmail)
+    if (authLookupError) {
+      console.error('Error looking up auth user for role mapping:', authLookupError)
+    }
+    const authUserId = (authUserLookup as any)?.user?.id || null
+
+    // Create role entry in user_roles table for secure role management using auth user id
+    if (authUserId) {
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .upsert({
+          user_id: authUserId,
+          role: userData.role,
+          jurusan: userData.jurusan
+        }, {
+          onConflict: 'user_id,role'
+        })
+      
+      if (roleError) {
+        console.error('Error creating role entry:', roleError)
+      }
+    } else {
+      console.warn('Auth user id not found for role upsert', { authEmail })
     }
 
     // Return user data with session token
