@@ -63,7 +63,8 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
   });
 
   return (
-    <Card className={`${collapsed ? 'w-16' : 'w-64'} h-screen rounded-none border-r border-border/50 card-gradient transition-all duration-300`}>
+    <Card className={`${collapsed ? 'w-16' : 'w-64'} h-screen rounded-none border-r border-border/50 card-gradient transition-all duration-300 relative overflow-hidden`}>
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-50"></div>
       <div className={`${collapsed ? 'p-2' : 'p-6'} h-full flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

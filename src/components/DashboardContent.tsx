@@ -86,19 +86,19 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold gradient-text">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Selamat datang, {user?.name || 'Admin'}! 
+      <div className="slide-up">
+        <h1 className="text-3xl font-bold gradient-text mb-2">Dashboard</h1>
+        <p className="text-muted-foreground text-lg">
+          Selamat datang, <span className="font-semibold text-foreground">{user?.name || 'Admin'}</span>! 
           {user?.role === 'kaprog' && ` - Kepala Program ${user.jurusan}`}
           {user?.role === 'kepala_sekolah' && ` - Kepala Sekolah`}
         </p>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 slide-up" style={{animationDelay: '0.1s'}}>
         {(user?.role === 'admin' || user?.role === 'kepala_sekolah') && (
           <StatCard
             title="Total Jurusan"
@@ -137,9 +137,12 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
       </div>
 
       {/* Recent Prakerin Data */}
-      <Card className="card-gradient border-border/50">
+      <Card className="card-gradient border-border/50 slide-up" style={{animationDelay: '0.2s'}}>
         <CardHeader>
-          <CardTitle>Data Prakerin Terbaru</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Briefcase className="h-5 w-5 text-primary" />
+            Data Prakerin Terbaru
+          </CardTitle>
           <CardDescription>
             {user?.role === 'kaprog' 
               ? `Data prakerin untuk jurusan ${user.jurusan}` 

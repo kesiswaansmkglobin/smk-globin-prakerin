@@ -193,6 +193,21 @@ serve(async (req) => {
       // Still return success with user data, frontend will handle gracefully
     }
 
+    // Create role entry in user_roles table for secure role management
+    const { error: roleError } = await supabase
+      .from('user_roles')
+      .upsert({
+        user_id: userData.id,
+        role: userData.role,
+        jurusan: userData.jurusan
+      }, {
+        onConflict: 'user_id,role'
+      })
+    
+    if (roleError) {
+      console.error('Error creating role entry:', roleError)
+    }
+
     // Return user data with session token
     return new Response(
       JSON.stringify({ 
