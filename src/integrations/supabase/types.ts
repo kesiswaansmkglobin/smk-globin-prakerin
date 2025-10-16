@@ -318,6 +318,10 @@ export type Database = {
         Args: { jurusan_name: string; user_id: string }
         Returns: boolean
       }
+      can_access_jurusan_data: {
+        Args: { _jurusan_id: string; _user_id: string }
+        Returns: boolean
+      }
       dearmor: {
         Args: { "": string }
         Returns: string
