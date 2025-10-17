@@ -197,13 +197,13 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
               Tambah Pengguna
             </Button>
           </DialogTrigger>
-          <DialogContent className="card-gradient border-border/50">
+          <DialogContent className="card-gradient border-border/50 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingUser ? 'Edit Pengguna' : 'Tambah Pengguna'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nama Lengkap</Label>
                 <Input

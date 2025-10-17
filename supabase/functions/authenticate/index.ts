@@ -163,13 +163,16 @@ serve(async (req) => {
     // This generates a proper JWT token for RLS policies
     const authEmail = `${userData.username}@internal.smkglobin.local`
     
-    // Check if auth user exists, if not create one
-    const { data: existingUser } = await supabase.auth.admin.getUserByEmail(authEmail)
+    // Check if auth user exists using listUsers
+    const { data: listData, error: listError } = await supabase.auth.admin.listUsers()
+    const existingUser = listData?.users?.find(u => u.email === authEmail)
+    
+    let authUserId = existingUser?.id || null
     
     if (!existingUser) {
       // Create auth user with random password (they'll use custom login)
       const randomPassword = crypto.randomUUID()
-      await supabase.auth.admin.createUser({
+      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: authEmail,
         password: randomPassword,
         email_confirm: true,
@@ -180,6 +183,12 @@ serve(async (req) => {
           jurusan: userData.jurusan
         }
       })
+      
+      if (createError) {
+        console.error('Error creating auth user:', createError)
+      } else {
+        authUserId = newUser?.user?.id || null
+      }
     }
     
     // Generate auth session for the user
@@ -192,13 +201,6 @@ serve(async (req) => {
       console.error('Session generation error:', sessionError)
       // Still return success with user data, frontend will handle gracefully
     }
-
-    // Map role to the Supabase Auth user id (not custom table id)
-    const { data: authUserLookup, error: authLookupError } = await supabase.auth.admin.getUserByEmail(authEmail)
-    if (authLookupError) {
-      console.error('Error looking up auth user for role mapping:', authLookupError)
-    }
-    const authUserId = (authUserLookup as any)?.user?.id || null
 
     // Create role entry in user_roles table for secure role management using auth user id
     if (authUserId) {
