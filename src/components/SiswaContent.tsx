@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, UserCircle, Upload } from 'lucide-react';
+import { Plus, Edit, Trash2, UserCircle, Upload, ArrowUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ImportSiswaDialog } from '@/components/ImportSiswaDialog';
@@ -28,6 +28,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [editingSiswa, setEditingSiswa] = useState(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [formData, setFormData] = useState({
     nis: '',
     nama: '',
@@ -36,6 +37,16 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
     jenis_kelamin: ''
   });
   const { toast } = useToast();
+
+  // Handle scroll to show/hide scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -214,8 +225,12 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
     
   const filteredJurusan = getFilteredJurusan(user, jurusan);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold gradient-text">Data Siswa</h1>
@@ -423,6 +438,18 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
         kelasList={kelas}
         jurusanList={jurusan}
       />
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <Button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 h-12 w-12 rounded-full shadow-lg glow-effect z-50"
+          size="icon"
+          title="Kembali ke atas"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </Button>
+      )}
     </div>
   );
 };

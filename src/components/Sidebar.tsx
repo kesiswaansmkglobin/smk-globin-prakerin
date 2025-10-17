@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -112,30 +113,32 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
           </div>
         )}
 
-        {/* Navigation Menu */}
-        <nav className="space-y-2">
-          {filteredMenuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeMenu === item.id;
-            
-            return (
-              <Button
-                key={item.id}
-                variant={isActive ? "default" : "ghost"}
-                 className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-start'} text-left ${
-                   isActive 
-                     ? 'bg-primary text-primary-foreground glow-effect' 
-                     : 'hover:bg-secondary/50'
-                 }`}
-                onClick={() => setActiveMenu(item.id as MenuType)}
-                title={collapsed ? item.label : undefined}
-              >
-                <Icon className={`${collapsed ? '' : 'mr-3'} h-4 w-4`} />
-                {!collapsed && item.label}
-              </Button>
-            );
-          })}
-        </nav>
+        {/* Navigation Menu with ScrollArea */}
+        <ScrollArea className="flex-1 -mx-2 px-2">
+          <nav className="space-y-2 pr-4">
+            {filteredMenuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeMenu === item.id;
+              
+              return (
+                <Button
+                  key={item.id}
+                  variant={isActive ? "default" : "ghost"}
+                   className={`w-full ${collapsed ? 'justify-center px-2' : 'justify-start'} text-left ${
+                     isActive 
+                       ? 'bg-primary text-primary-foreground glow-effect' 
+                       : 'hover:bg-secondary/50'
+                   }`}
+                  onClick={() => setActiveMenu(item.id as MenuType)}
+                  title={collapsed ? item.label : undefined}
+                >
+                  <Icon className={`${collapsed ? '' : 'mr-3'} h-4 w-4`} />
+                  {!collapsed && item.label}
+                </Button>
+              );
+            })}
+          </nav>
+        </ScrollArea>
 
         {/* Logout Button - properly positioned within sidebar */}
         <div className="mt-auto pt-6">
