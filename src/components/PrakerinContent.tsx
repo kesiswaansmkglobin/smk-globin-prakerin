@@ -299,189 +299,191 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                 Tambah Data Prakerin
               </Button>
             </DialogTrigger>
-            <DialogContent className="card-gradient border-border/50 max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="card-gradient border-border/50 max-w-2xl overflow-hidden">
               <DialogHeader>
                 <DialogTitle>
                   {editingPrakerin ? 'Edit Data Prakerin' : 'Tambah Data Prakerin'}
                 </DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Kelas Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="kelas">Pilih Kelas</Label>
-                  <Select 
-                    value={selectedKelas} 
-                    onValueChange={setSelectedKelas}
-                  >
-                    <SelectTrigger className="bg-input/50 border-border/50">
-                      <SelectValue placeholder="Pilih kelas terlebih dahulu" />
-                    </SelectTrigger>
-                    <SelectContent className="card-gradient border-border/50">
-                      {kelasList.map((kelas) => (
-                        <SelectItem key={kelas.id} value={kelas.nama}>
-                          {kelas.nama} - {kelas.jurusan?.nama}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Siswa Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="siswa">Pilih Siswa</Label>
-                  <Select 
-                    value={selectedSiswa} 
-                    onValueChange={handleSiswaSelect}
-                    disabled={!selectedKelas}
-                  >
-                    <SelectTrigger className="bg-input/50 border-border/50">
-                      <SelectValue placeholder={selectedKelas ? "Pilih siswa" : "Pilih kelas terlebih dahulu"} />
-                    </SelectTrigger>
-                    <SelectContent className="card-gradient border-border/50">
-                      {filteredSiswa.map((siswa) => (
-                        <SelectItem key={siswa.id} value={siswa.id}>
-                          {siswa.nama} - {siswa.nis}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Display Selected Siswa Info */}
-                {selectedSiswa && (
-                  <Card className="bg-primary/10 border-primary/20">
-                    <CardContent className="pt-4">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <Label className="text-muted-foreground">NIS:</Label>
-                          <p className="font-medium">{getSelectedSiswaData()?.nis}</p>
-                        </div>
-                        <div>
-                          <Label className="text-muted-foreground">Nama:</Label>
-                          <p className="font-medium">{getSelectedSiswaData()?.nama}</p>
-                        </div>
-                        <div>
-                          <Label className="text-muted-foreground">Kelas:</Label>
-                          <p className="font-medium">{getSelectedSiswaData()?.kelas?.nama}</p>
-                        </div>
-                        <div>
-                          <Label className="text-muted-foreground">Jurusan:</Label>
-                          <p className="font-medium">{getSelectedSiswaData()?.jurusan?.nama}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="tempat_prakerin">Tempat Prakerin</Label>
-                  <Input
-                    id="tempat_prakerin"
-                    value={formData.tempat_prakerin}
-                    onChange={(e) => setFormData(prev => ({ ...prev, tempat_prakerin: e.target.value }))}
-                    placeholder="PT. ABC / CV. XYZ"
-                    className="bg-input/50 border-border/50"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="alamat_prakerin">Alamat Prakerin</Label>
-                  <Input
-                    id="alamat_prakerin"
-                    value={formData.alamat_prakerin}
-                    onChange={(e) => setFormData(prev => ({ ...prev, alamat_prakerin: e.target.value }))}
-                    placeholder="Alamat lengkap tempat prakerin"
-                    className="bg-input/50 border-border/50"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+              <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Kelas Selection */}
                   <div className="space-y-2">
-                    <Label htmlFor="tanggal_mulai">Tanggal Mulai</Label>
+                    <Label htmlFor="kelas">Pilih Kelas</Label>
+                    <Select 
+                      value={selectedKelas} 
+                      onValueChange={setSelectedKelas}
+                    >
+                      <SelectTrigger className="bg-input/50 border-border/50">
+                        <SelectValue placeholder="Pilih kelas terlebih dahulu" />
+                      </SelectTrigger>
+                      <SelectContent className="card-gradient border-border/50">
+                        {kelasList.map((kelas) => (
+                          <SelectItem key={kelas.id} value={kelas.nama}>
+                            {kelas.nama} - {kelas.jurusan?.nama}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Siswa Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="siswa">Pilih Siswa</Label>
+                    <Select 
+                      value={selectedSiswa} 
+                      onValueChange={handleSiswaSelect}
+                      disabled={!selectedKelas}
+                    >
+                      <SelectTrigger className="bg-input/50 border-border/50">
+                        <SelectValue placeholder={selectedKelas ? "Pilih siswa" : "Pilih kelas terlebih dahulu"} />
+                      </SelectTrigger>
+                      <SelectContent className="card-gradient border-border/50">
+                        {filteredSiswa.map((siswa) => (
+                          <SelectItem key={siswa.id} value={siswa.id}>
+                            {siswa.nama} - {siswa.nis}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Display Selected Siswa Info */}
+                  {selectedSiswa && (
+                    <Card className="bg-primary/10 border-primary/20">
+                      <CardContent className="pt-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <Label className="text-muted-foreground">NIS:</Label>
+                            <p className="font-medium">{getSelectedSiswaData()?.nis}</p>
+                          </div>
+                          <div>
+                            <Label className="text-muted-foreground">Nama:</Label>
+                            <p className="font-medium">{getSelectedSiswaData()?.nama}</p>
+                          </div>
+                          <div>
+                            <Label className="text-muted-foreground">Kelas:</Label>
+                            <p className="font-medium">{getSelectedSiswaData()?.kelas?.nama}</p>
+                          </div>
+                          <div>
+                            <Label className="text-muted-foreground">Jurusan:</Label>
+                            <p className="font-medium">{getSelectedSiswaData()?.jurusan?.nama}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tempat_prakerin">Tempat Prakerin</Label>
                     <Input
-                      id="tanggal_mulai"
-                      type="date"
-                      value={formData.tanggal_mulai}
-                      onChange={(e) => setFormData(prev => ({ ...prev, tanggal_mulai: e.target.value }))}
+                      id="tempat_prakerin"
+                      value={formData.tempat_prakerin}
+                      onChange={(e) => setFormData(prev => ({ ...prev, tempat_prakerin: e.target.value }))}
+                      placeholder="PT. ABC / CV. XYZ"
                       className="bg-input/50 border-border/50"
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="tanggal_selesai">Tanggal Selesai</Label>
+                    <Label htmlFor="alamat_prakerin">Alamat Prakerin</Label>
                     <Input
-                      id="tanggal_selesai"
-                      type="date"
-                      value={formData.tanggal_selesai}
-                      onChange={(e) => setFormData(prev => ({ ...prev, tanggal_selesai: e.target.value }))}
+                      id="alamat_prakerin"
+                      value={formData.alamat_prakerin}
+                      onChange={(e) => setFormData(prev => ({ ...prev, alamat_prakerin: e.target.value }))}
+                      placeholder="Alamat lengkap tempat prakerin"
                       className="bg-input/50 border-border/50"
                       required
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="pembimbing_sekolah">Guru Pembimbing</Label>
-                  <Input
-                    id="pembimbing_sekolah"
-                    value={formData.pembimbing_sekolah}
-                    onChange={(e) => setFormData(prev => ({ ...prev, pembimbing_sekolah: e.target.value }))}
-                    placeholder="Nama guru pembimbing"
-                    className="bg-input/50 border-border/50"
-                    required
-                  />
-                </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="tanggal_mulai">Tanggal Mulai</Label>
+                      <Input
+                        id="tanggal_mulai"
+                        type="date"
+                        value={formData.tanggal_mulai}
+                        onChange={(e) => setFormData(prev => ({ ...prev, tanggal_mulai: e.target.value }))}
+                        className="bg-input/50 border-border/50"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="tanggal_selesai">Tanggal Selesai</Label>
+                      <Input
+                        id="tanggal_selesai"
+                        type="date"
+                        value={formData.tanggal_selesai}
+                        onChange={(e) => setFormData(prev => ({ ...prev, tanggal_selesai: e.target.value }))}
+                        className="bg-input/50 border-border/50"
+                        required
+                      />
+                    </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="pembimbing_industri">Pembimbing Industri</Label>
-                  <Input
-                    id="pembimbing_industri"
-                    value={formData.pembimbing_industri}
-                    onChange={(e) => setFormData(prev => ({ ...prev, pembimbing_industri: e.target.value }))}
-                    placeholder="Nama pembimbing di industri"
-                    className="bg-input/50 border-border/50"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="nilai_akhir">Nilai Akhir</Label>
+                    <Label htmlFor="pembimbing_sekolah">Guru Pembimbing</Label>
                     <Input
-                      id="nilai_akhir"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={formData.nilai_akhir}
-                      onChange={(e) => setFormData(prev => ({ ...prev, nilai_akhir: e.target.value }))}
-                      placeholder="0-100"
+                      id="pembimbing_sekolah"
+                      value={formData.pembimbing_sekolah}
+                      onChange={(e) => setFormData(prev => ({ ...prev, pembimbing_sekolah: e.target.value }))}
+                      placeholder="Nama guru pembimbing"
+                      className="bg-input/50 border-border/50"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="pembimbing_industri">Pembimbing Industri</Label>
+                    <Input
+                      id="pembimbing_industri"
+                      value={formData.pembimbing_industri}
+                      onChange={(e) => setFormData(prev => ({ ...prev, pembimbing_industri: e.target.value }))}
+                      placeholder="Nama pembimbing di industri"
                       className="bg-input/50 border-border/50"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="nilai_akhir">Nilai Akhir</Label>
+                      <Input
+                        id="nilai_akhir"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={formData.nilai_akhir}
+                        onChange={(e) => setFormData(prev => ({ ...prev, nilai_akhir: e.target.value }))}
+                        placeholder="0-100"
+                        className="bg-input/50 border-border/50"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="keterangan">Keterangan</Label>
+                      <Input
+                        id="keterangan"
+                        value={formData.keterangan}
+                        onChange={(e) => setFormData(prev => ({ ...prev, keterangan: e.target.value }))}
+                        placeholder="Keterangan tambahan"
+                        className="bg-input/50 border-border/50"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="keterangan">Keterangan</Label>
-                    <Input
-                      id="keterangan"
-                      value={formData.keterangan}
-                      onChange={(e) => setFormData(prev => ({ ...prev, keterangan: e.target.value }))}
-                      placeholder="Keterangan tambahan"
-                      className="bg-input/50 border-border/50"
-                    />
+                  <div className="flex gap-2 justify-end pt-4">
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      Batal
+                    </Button>
+                    <Button type="submit" className="glow-effect" disabled={!selectedSiswa}>
+                      {editingPrakerin ? 'Simpan' : 'Tambah'}
+                    </Button>
                   </div>
-                </div>
-                
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={resetForm}>
-                    Batal
-                  </Button>
-                  <Button type="submit" className="glow-effect" disabled={!selectedSiswa}>
-                    {editingPrakerin ? 'Simpan' : 'Tambah'}
-                  </Button>
-                </div>
-              </form>
+                </form>
+              </div>
             </DialogContent>
           </Dialog>
         )}
