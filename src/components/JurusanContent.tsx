@@ -104,34 +104,36 @@ const JurusanContent = ({ user }: JurusanContentProps) => {
                 Tambah Jurusan
               </Button>
             </DialogTrigger>
-            <DialogContent className="card-gradient border-border/50">
+            <DialogContent className="card-gradient border-border/50 overflow-hidden">
               <DialogHeader>
                 <DialogTitle>
                   {isEditing ? 'Edit Jurusan' : 'Tambah Jurusan'}
                 </DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nama">Nama Jurusan</Label>
-                  <Input
-                    id="nama"
-                    value={formData.nama}
-                    onChange={(e) => handleFieldChange('nama', e.target.value)}
-                    placeholder="Masukkan nama jurusan"
-                    required
-                    className="bg-input/50 border-border/50"
-                  />
-                </div>
-                
-                <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={closeDialog}>
-                    Batal
-                  </Button>
-                  <Button type="submit" className="glow-effect" disabled={mutation.loading}>
-                    {isEditing ? 'Simpan' : 'Tambah'}
-                  </Button>
-                </div>
-              </form>
+              <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nama">Nama Jurusan</Label>
+                    <Input
+                      id="nama"
+                      value={formData.nama}
+                      onChange={(e) => handleFieldChange('nama', e.target.value)}
+                      placeholder="Masukkan nama jurusan"
+                      required
+                      className="bg-input/50 border-border/50"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2 justify-end pt-4">
+                    <Button type="button" variant="outline" onClick={closeDialog}>
+                      Batal
+                    </Button>
+                    <Button type="submit" className="glow-effect" disabled={mutation.loading}>
+                      {isEditing ? 'Simpan' : 'Tambah'}
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </DialogContent>
           </Dialog>
         )}

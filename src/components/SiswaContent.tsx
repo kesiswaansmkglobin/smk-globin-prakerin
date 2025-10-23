@@ -254,104 +254,106 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
                     Tambah Siswa
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="card-gradient border-border/50 max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="card-gradient border-border/50 max-w-2xl overflow-hidden">
                   <DialogHeader>
                     <DialogTitle>
                       {editingSiswa ? 'Edit Siswa' : 'Tambah Siswa Baru'}
                     </DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="nis">NIS</Label>
-                        <Input
-                          id="nis"
-                          name="nis"
-                          value={formData.nis}
-                          onChange={handleChange}
-                          placeholder="Masukkan NIS"
-                          required
-                          className="bg-input/50 border-border/50"
-                        />
+                  <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="nis">NIS</Label>
+                          <Input
+                            id="nis"
+                            name="nis"
+                            value={formData.nis}
+                            onChange={handleChange}
+                            placeholder="Masukkan NIS"
+                            required
+                            className="bg-input/50 border-border/50"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="nama">Nama Lengkap</Label>
+                          <Input
+                            id="nama"
+                            name="nama"
+                            value={formData.nama}
+                            onChange={handleChange}
+                            placeholder="Masukkan nama lengkap"
+                            required
+                            className="bg-input/50 border-border/50"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="nama">Nama Lengkap</Label>
-                        <Input
-                          id="nama"
-                          name="nama"
-                          value={formData.nama}
-                          onChange={handleChange}
-                          placeholder="Masukkan nama lengkap"
-                          required
-                          className="bg-input/50 border-border/50"
-                        />
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="kelas_id">Kelas</Label>
+                          <Select
+                            value={formData.kelas_id}
+                            onValueChange={(value) => setFormData(prev => ({ ...prev, kelas_id: value }))}
+                          >
+                            <SelectTrigger className="bg-input/50 border-border/50">
+                              <SelectValue placeholder="Pilih kelas" />
+                            </SelectTrigger>
+                            <SelectContent className="card-gradient border-border/50">
+                              {filteredKelas.map((item: any) => (
+                                <SelectItem key={item.id} value={item.id}>
+                                  {item.nama}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="jurusan_id">Jurusan</Label>
+                          <Select
+                            value={formData.jurusan_id}
+                            onValueChange={(value) => setFormData(prev => ({ ...prev, jurusan_id: value }))}
+                          >
+                            <SelectTrigger className="bg-input/50 border-border/50">
+                              <SelectValue placeholder="Pilih jurusan" />
+                            </SelectTrigger>
+                            <SelectContent className="card-gradient border-border/50">
+                              {filteredJurusan.map((item: any) => (
+                                <SelectItem key={item.id} value={item.id}>
+                                  {item.nama}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
+
                       <div>
-                        <Label htmlFor="kelas_id">Kelas</Label>
+                        <Label htmlFor="jenis_kelamin">Jenis Kelamin</Label>
                         <Select
-                          value={formData.kelas_id}
-                          onValueChange={(value) => setFormData(prev => ({ ...prev, kelas_id: value }))}
+                          value={formData.jenis_kelamin}
+                          onValueChange={(value) => setFormData(prev => ({ ...prev, jenis_kelamin: value }))}
                         >
                           <SelectTrigger className="bg-input/50 border-border/50">
-                            <SelectValue placeholder="Pilih kelas" />
+                            <SelectValue placeholder="Pilih jenis kelamin" />
                           </SelectTrigger>
                           <SelectContent className="card-gradient border-border/50">
-                            {filteredKelas.map((item: any) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.nama}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="L">Laki-laki</SelectItem>
+                            <SelectItem value="P">Perempuan</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
-                        <Label htmlFor="jurusan_id">Jurusan</Label>
-                        <Select
-                          value={formData.jurusan_id}
-                          onValueChange={(value) => setFormData(prev => ({ ...prev, jurusan_id: value }))}
-                        >
-                          <SelectTrigger className="bg-input/50 border-border/50">
-                            <SelectValue placeholder="Pilih jurusan" />
-                          </SelectTrigger>
-                          <SelectContent className="card-gradient border-border/50">
-                            {filteredJurusan.map((item: any) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.nama}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+
+                      <div className="flex justify-end space-x-2 pt-4">
+                        <Button type="button" variant="outline" onClick={resetForm}>
+                          Batal
+                        </Button>
+                        <Button type="submit" className="glow-effect">
+                          {editingSiswa ? 'Perbarui' : 'Simpan'}
+                        </Button>
                       </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="jenis_kelamin">Jenis Kelamin</Label>
-                      <Select
-                        value={formData.jenis_kelamin}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, jenis_kelamin: value }))}
-                      >
-                        <SelectTrigger className="bg-input/50 border-border/50">
-                          <SelectValue placeholder="Pilih jenis kelamin" />
-                        </SelectTrigger>
-                        <SelectContent className="card-gradient border-border/50">
-                          <SelectItem value="L">Laki-laki</SelectItem>
-                          <SelectItem value="P">Perempuan</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={resetForm}>
-                        Batal
-                      </Button>
-                      <Button type="submit" className="glow-effect">
-                        {editingSiswa ? 'Perbarui' : 'Simpan'}
-                      </Button>
-                    </div>
-                  </form>
+                    </form>
+                  </div>
                 </DialogContent>
               </Dialog>
             </>

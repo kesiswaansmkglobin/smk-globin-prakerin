@@ -170,74 +170,76 @@ const SekolahContent = ({ user }: SekolahContentProps) => {
                 Tambah Sekolah
               </Button>
             </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="overflow-hidden">
             <DialogHeader>
               <DialogTitle>
                 {editingSekolah ? 'Edit Sekolah' : 'Tambah Sekolah Baru'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="nama">Nama Sekolah</Label>
-                <Input
-                  id="nama"
-                  name="nama"
-                  value={formData.nama}
-                  onChange={handleChange}
-                  placeholder="Masukkan nama sekolah"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="alamat">Alamat</Label>
-                <Input
-                  id="alamat"
-                  name="alamat"
-                  value={formData.alamat}
-                  onChange={handleChange}
-                  placeholder="Masukkan alamat sekolah"
-                />
-              </div>
-              <div>
-                <Label htmlFor="telepon">Telepon</Label>
-                <Input
-                  id="telepon"
-                  name="telepon"
-                  value={formData.telepon}
-                  onChange={handleChange}
-                  placeholder="Masukkan nomor telepon"
-                />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Masukkan email sekolah"
-                />
-              </div>
-              <div>
-                <Label htmlFor="kepala_sekolah">Kepala Sekolah</Label>
-                <Input
-                  id="kepala_sekolah"
-                  name="kepala_sekolah"
-                  value={formData.kepala_sekolah}
-                  onChange={handleChange}
-                  placeholder="Masukkan nama kepala sekolah"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Batal
-                </Button>
-                <Button type="submit">
-                  {editingSekolah ? 'Perbarui' : 'Simpan'}
-                </Button>
-              </div>
-            </form>
+            <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="nama">Nama Sekolah</Label>
+                  <Input
+                    id="nama"
+                    name="nama"
+                    value={formData.nama}
+                    onChange={handleChange}
+                    placeholder="Masukkan nama sekolah"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="alamat">Alamat</Label>
+                  <Input
+                    id="alamat"
+                    name="alamat"
+                    value={formData.alamat}
+                    onChange={handleChange}
+                    placeholder="Masukkan alamat sekolah"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="telepon">Telepon</Label>
+                  <Input
+                    id="telepon"
+                    name="telepon"
+                    value={formData.telepon}
+                    onChange={handleChange}
+                    placeholder="Masukkan nomor telepon"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Masukkan email sekolah"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="kepala_sekolah">Kepala Sekolah</Label>
+                  <Input
+                    id="kepala_sekolah"
+                    name="kepala_sekolah"
+                    value={formData.kepala_sekolah}
+                    onChange={handleChange}
+                    placeholder="Masukkan nama kepala sekolah"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    Batal
+                  </Button>
+                  <Button type="submit">
+                    {editingSekolah ? 'Perbarui' : 'Simpan'}
+                  </Button>
+                </div>
+              </form>
+            </div>
           </DialogContent>
         </Dialog>
         )}

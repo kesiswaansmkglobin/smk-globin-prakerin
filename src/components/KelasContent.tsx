@@ -182,77 +182,79 @@ const KelasContent = ({ user }: KelasContentProps) => {
                 Tambah Kelas
               </Button>
             </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="overflow-hidden">
             <DialogHeader>
               <DialogTitle>
                 {editingKelas ? 'Edit Kelas' : 'Tambah Kelas Baru'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="nama">Nama Kelas</Label>
-                <Input
-                  id="nama"
-                  name="nama"
-                  value={formData.nama}
-                  onChange={handleChange}
-                  placeholder="Masukkan nama kelas"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="jurusan_id">Jurusan</Label>
-                <Select
-                  value={formData.jurusan_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, jurusan_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih jurusan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {jurusan.map((item: any) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.nama}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="tingkat">Tingkat</Label>
-                <Select
-                  value={formData.tingkat.toString()}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, tingkat: parseInt(value) }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih tingkat" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">Kelas X</SelectItem>
-                    <SelectItem value="11">Kelas XI</SelectItem>
-                    <SelectItem value="12">Kelas XII</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="wali_kelas">Wali Kelas</Label>
-                <Input
-                  id="wali_kelas"
-                  name="wali_kelas"
-                  value={formData.wali_kelas}
-                  onChange={handleChange}
-                  placeholder="Masukkan nama wali kelas"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Batal
-                </Button>
-                <Button type="submit">
-                  {editingKelas ? 'Perbarui' : 'Simpan'}
-                </Button>
-              </div>
-            </form>
+            <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="nama">Nama Kelas</Label>
+                  <Input
+                    id="nama"
+                    name="nama"
+                    value={formData.nama}
+                    onChange={handleChange}
+                    placeholder="Masukkan nama kelas"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="jurusan_id">Jurusan</Label>
+                  <Select
+                    value={formData.jurusan_id}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, jurusan_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih jurusan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {jurusan.map((item: any) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.nama}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="tingkat">Tingkat</Label>
+                  <Select
+                    value={formData.tingkat.toString()}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, tingkat: parseInt(value) }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih tingkat" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">Kelas X</SelectItem>
+                      <SelectItem value="11">Kelas XI</SelectItem>
+                      <SelectItem value="12">Kelas XII</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="wali_kelas">Wali Kelas</Label>
+                  <Input
+                    id="wali_kelas"
+                    name="wali_kelas"
+                    value={formData.wali_kelas}
+                    onChange={handleChange}
+                    placeholder="Masukkan nama wali kelas"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    Batal
+                  </Button>
+                  <Button type="submit">
+                    {editingKelas ? 'Perbarui' : 'Simpan'}
+                  </Button>
+                </div>
+              </form>
+            </div>
           </DialogContent>
         </Dialog>
         )}

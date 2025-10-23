@@ -251,12 +251,13 @@ export function ImportSiswaDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="card-gradient border-border/50 max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="card-gradient border-border/50 max-w-4xl overflow-hidden">
         <DialogHeader>
           <DialogTitle>Impor Data Siswa</DialogTitle>
         </DialogHeader>
 
-        {step === 'upload' && (
+        <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
+          {step === 'upload' && (
           <div className="space-y-6">
             <div className="text-center py-8">
               <FileText className="mx-auto h-12 w-12 text-primary mb-4" />
@@ -412,6 +413,7 @@ export function ImportSiswaDialog({
             </p>
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );
