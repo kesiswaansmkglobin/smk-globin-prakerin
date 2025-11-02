@@ -130,9 +130,9 @@
     box-shadow: 0 0 30px hsl(186 100% 57% / 0.5);
   }
   
-  /* Disable hover translation for surfaces that shouldn't move (dialogs, dropdowns) */
+  /* Disable hover translation for dialog surfaces (preserve centering) */
   .no-hover-transform:hover {
-    transform: none !important;
+    transform: translate(-50%, -50%) !important; /* keep left/top 50% centering */
     box-shadow: var(--shadow-card);
   }
   
