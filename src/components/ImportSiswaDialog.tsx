@@ -251,7 +251,7 @@ export function ImportSiswaDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="card-gradient no-hover-transform border-border/50 max-w-4xl overflow-hidden">
+      <DialogContent className="dialog-surface border-border/50 max-w-4xl overflow-hidden">
         <DialogHeader>
           <DialogTitle>Impor Data Siswa</DialogTitle>
         </DialogHeader>

@@ -197,13 +197,14 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
               Tambah Pengguna
             </Button>
           </DialogTrigger>
-          <DialogContent className="card-gradient no-hover-transform border-border/50 max-h-[90vh] overflow-y-auto">
+          <DialogContent className="dialog-surface border-border/50 overflow-hidden">
+            <div className="max-h-[calc(90vh-120px)] overflow-y-auto pr-2">
             <DialogHeader>
               <DialogTitle>
                 {editingUser ? 'Edit Pengguna' : 'Tambah Pengguna'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nama Lengkap</Label>
                 <Input
@@ -263,7 +264,7 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
                 </Select>
               </div>
               
-              <div className="flex gap-2 justify-end">
+              <div className="flex gap-2 justify-end pt-4">
                 <Button type="button" variant="outline" onClick={resetForm}>
                   Batal
                 </Button>
@@ -271,7 +272,8 @@ const PenggunaContent = ({ user }: PenggunaContentProps) => {
                   {editingUser ? 'Simpan' : 'Tambah'}
                 </Button>
               </div>
-            </form>
+              </form>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

@@ -170,7 +170,7 @@ const SekolahContent = ({ user }: SekolahContentProps) => {
                 Tambah Sekolah
               </Button>
             </DialogTrigger>
-          <DialogContent className="overflow-hidden">
+          <DialogContent className="dialog-surface border-border/50 overflow-hidden">
             <DialogHeader>
               <DialogTitle>
                 {editingSekolah ? 'Edit Sekolah' : 'Tambah Sekolah Baru'}

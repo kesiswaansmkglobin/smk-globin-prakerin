@@ -182,7 +182,7 @@ const KelasContent = ({ user }: KelasContentProps) => {
                 Tambah Kelas
               </Button>
             </DialogTrigger>
-          <DialogContent className="overflow-hidden">
+          <DialogContent className="dialog-surface border-border/50 overflow-hidden">
             <DialogHeader>
               <DialogTitle>
                 {editingKelas ? 'Edit Kelas' : 'Tambah Kelas Baru'}
