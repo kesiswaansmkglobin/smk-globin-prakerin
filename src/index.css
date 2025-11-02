@@ -130,6 +130,12 @@
     box-shadow: 0 0 30px hsl(186 100% 57% / 0.5);
   }
   
+  /* Disable hover translation for surfaces that shouldn't move (dialogs, dropdowns) */
+  .no-hover-transform:hover {
+    transform: none !important;
+    box-shadow: var(--shadow-card);
+  }
+  
   .gradient-text {
     background: var(--gradient-primary);
     -webkit-background-clip: text;

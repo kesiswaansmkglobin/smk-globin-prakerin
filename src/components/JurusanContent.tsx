@@ -104,7 +104,7 @@ const JurusanContent = ({ user }: JurusanContentProps) => {
                 Tambah Jurusan
               </Button>
             </DialogTrigger>
-            <DialogContent className="card-gradient border-border/50 overflow-hidden">
+            <DialogContent className="card-gradient no-hover-transform border-border/50 overflow-hidden">
               <DialogHeader>
                 <DialogTitle>
                   {isEditing ? 'Edit Jurusan' : 'Tambah Jurusan'}

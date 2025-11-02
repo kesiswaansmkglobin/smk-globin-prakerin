@@ -254,7 +254,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
                     Tambah Siswa
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="card-gradient border-border/50 max-w-2xl overflow-hidden">
+                <DialogContent className="card-gradient no-hover-transform border-border/50 max-w-2xl overflow-hidden">
                   <DialogHeader>
                     <DialogTitle>
                       {editingSiswa ? 'Edit Siswa' : 'Tambah Siswa Baru'}

@@ -299,7 +299,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                 Tambah Data Prakerin
               </Button>
             </DialogTrigger>
-            <DialogContent className="card-gradient border-border/50 max-w-2xl overflow-hidden">
+            <DialogContent className="card-gradient no-hover-transform border-border/50 max-w-2xl overflow-hidden">
               <DialogHeader>
                 <DialogTitle>
                   {editingPrakerin ? 'Edit Data Prakerin' : 'Tambah Data Prakerin'}
