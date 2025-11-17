@@ -13,7 +13,7 @@ const Index = () => {
       
       <Card className="w-full max-w-2xl p-8 card-gradient border border-border/50 relative z-10 text-center">
         <div className="flex items-center justify-center mb-6">
-          <div className="p-4 rounded-full bg-primary/10 glow-effect">
+          <div className="p-4 rounded-full bg-primary/10 border border-primary/20">
             <School className="h-12 w-12 text-primary" />
           </div>
         </div>
@@ -30,7 +30,7 @@ const Index = () => {
         
         <div className="space-y-4">
           <Button 
-            className="w-full glow-effect" 
+            className="w-full" 
             size="lg"
             onClick={() => navigate('/')}
           >

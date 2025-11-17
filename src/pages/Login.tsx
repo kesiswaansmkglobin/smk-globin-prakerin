@@ -98,7 +98,7 @@ const Login = () => {
       <Card className="w-full max-w-md p-8 card-gradient border border-border/50 relative z-10 fade-in">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <div className="p-3 rounded-full bg-primary/10 glow-effect">
+            <div className="p-3 rounded-full bg-primary/10 border border-primary/20">
               <School className="h-8 w-8 text-primary" />
             </div>
           </div>
@@ -150,7 +150,7 @@ const Login = () => {
 
           <Button 
             type="submit" 
-            className="w-full glow-effect"
+            className="w-full"
             disabled={loading}
           >
             <LogIn className="mr-2 h-4 w-4" />
