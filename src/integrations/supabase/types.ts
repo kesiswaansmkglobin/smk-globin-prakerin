@@ -296,14 +296,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      allow_authenticated_access: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      armor: {
-        Args: { "": string }
-        Returns: string
-      }
+      allow_authenticated_access: { Args: never; Returns: boolean }
       authenticate_user: {
         Args: { input_password: string; input_username: string }
         Returns: {
@@ -322,37 +315,18 @@ export type Database = {
         Args: { _jurusan_id: string; _user_id: string }
         Returns: boolean
       }
-      dearmor: {
-        Args: { "": string }
-        Returns: string
-      }
-      gen_random_bytes: {
-        Args: { "": number }
-        Returns: string
-      }
-      gen_random_uuid: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      gen_salt: {
-        Args: { "": string }
-        Returns: string
-      }
+      dearmor: { Args: { "": string }; Returns: string }
+      gen_random_uuid: { Args: never; Returns: string }
+      gen_salt: { Args: { "": string }; Returns: string }
       get_current_user_info: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           user_jurusan: string
           user_role: string
         }[]
       }
-      get_user_jurusan: {
-        Args: { user_id: string }
-        Returns: string
-      }
-      get_user_role: {
-        Args: { user_id: string }
-        Returns: string
-      }
+      get_user_jurusan: { Args: { user_id: string }; Returns: string }
+      get_user_role: { Args: { user_id: string }; Returns: string }
       get_user_role_secure: {
         Args: { _user_id: string }
         Returns: {
@@ -367,49 +341,18 @@ export type Database = {
         }
         Returns: boolean
       }
-      hash_password: {
-        Args: { password: string }
-        Returns: string
-      }
-      is_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_authenticated_school_personnel: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_authenticated_school_staff: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_authenticated_school_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_authenticated_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_kaprog: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_kepala_sekolah: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      is_valid_api_request: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      hash_password: { Args: { password: string }; Returns: string }
+      is_admin: { Args: { user_id: string }; Returns: boolean }
+      is_authenticated_school_personnel: { Args: never; Returns: boolean }
+      is_authenticated_school_staff: { Args: never; Returns: boolean }
+      is_authenticated_school_user: { Args: never; Returns: boolean }
+      is_authenticated_user: { Args: never; Returns: boolean }
+      is_kaprog: { Args: { user_id: string }; Returns: boolean }
+      is_kepala_sekolah: { Args: { user_id: string }; Returns: boolean }
+      is_valid_api_request: { Args: never; Returns: boolean }
       pgp_armor_headers: {
         Args: { "": string }
         Returns: Record<string, unknown>[]
-      }
-      pgp_key_id: {
-        Args: { "": string }
-        Returns: string
       }
       verify_password: {
         Args: { hash: string; password: string }
