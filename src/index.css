@@ -63,7 +63,7 @@
     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
     --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%), hsl(38 92% 60%));
     
-    --shadow-glow: 0 0 20px hsl(186 100% 57% / 0.3);
+    --shadow-glow: 0 0 15px hsl(186 100% 57% / 0.2);
     --shadow-card: 0 4px 6px -1px hsl(220 39% 5% / 0.4);
     --shadow-elevated: 0 10px 30px -5px hsl(220 39% 5% / 0.6);
     --shadow-soft: 0 2px 8px -2px hsl(220 39% 5% / 0.3);
@@ -156,12 +156,12 @@
   }
   
   .glow-effect {
-    box-shadow: var(--shadow-glow);
+    box-shadow: 0 0 10px hsl(186 100% 57% / 0.15);
     transition: box-shadow var(--transition-slow) ease;
   }
   
   .glow-effect:hover {
-    box-shadow: 0 0 30px hsl(186 100% 57% / 0.5);
+    box-shadow: 0 0 20px hsl(186 100% 57% / 0.25);
   }
   
   /* Dialog surface styling without hover movement */
@@ -176,6 +176,7 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    display: inline-block;
   }
   
   .gradient-text-secondary {
