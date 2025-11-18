@@ -89,7 +89,7 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
     <div className="space-y-6 fade-in">
       {/* Header */}
       <div className="slide-up">
-        <h1 className="text-3xl font-bold gradient-text mb-2">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-primary mb-2">Dashboard</h1>
         <p className="text-muted-foreground text-lg">
           Selamat datang, <span className="font-semibold text-foreground">{user?.name || 'Admin'}</span>! 
           {user?.role === 'kaprog' && ` - Kepala Program ${user.jurusan}`}

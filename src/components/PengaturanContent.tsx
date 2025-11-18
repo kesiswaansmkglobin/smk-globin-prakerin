@@ -168,7 +168,7 @@ const PengaturanContent = ({ user }: PengaturanContentProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold gradient-text">Pengaturan</h1>
+        <h1 className="text-3xl font-bold text-primary">Pengaturan</h1>
         <p className="text-muted-foreground">Kelola backup, restore, dan pengaturan database</p>
       </div>
 

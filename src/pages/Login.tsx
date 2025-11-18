@@ -102,7 +102,7 @@ const Login = () => {
               <School className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold gradient-text mb-2">
+          <h1 className="text-2xl font-bold text-primary mb-2">
             SIM Prakerin
           </h1>
           <p className="text-muted-foreground">SMK GLOBIN</p>

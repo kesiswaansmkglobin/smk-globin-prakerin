@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSwipeable } from 'react-swipeable';
 import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
 import DashboardContent from '@/components/DashboardContent';
@@ -57,6 +58,29 @@ const Dashboard = () => {
     }
   };
 
+  const menuItems: MenuType[] = ['dashboard', 'sekolah', 'jurusan', 'kelas', 'siswa', 'prakerin', 'laporan', 'pengguna', 'pengaturan'];
+  
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (isMobile) {
+        const currentIndex = menuItems.indexOf(activeMenu);
+        if (currentIndex < menuItems.length - 1) {
+          setActiveMenu(menuItems[currentIndex + 1]);
+        }
+      }
+    },
+    onSwipedRight: () => {
+      if (isMobile) {
+        const currentIndex = menuItems.indexOf(activeMenu);
+        if (currentIndex > 0) {
+          setActiveMenu(menuItems[currentIndex - 1]);
+        }
+      }
+    },
+    trackMouse: false,
+    trackTouch: true,
+  });
+
   if (!user) {
     return null;
   }
@@ -76,7 +100,7 @@ const Dashboard = () => {
       )}
       
       {/* Main Content */}
-      <main className="flex-1 overflow-auto pb-20 md:pb-0">
+      <main {...handlers} className="flex-1 overflow-auto pb-20 md:pb-0">
         <div className="p-4 md:p-6">
           {renderContent()}
         </div>

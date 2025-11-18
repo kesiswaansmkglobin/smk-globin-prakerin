@@ -250,7 +250,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold gradient-text">Rekap & Laporan</h1>
+        <h1 className="text-3xl font-bold text-primary">Rekap & Laporan</h1>
         <p className="text-muted-foreground">
           {user?.role === 'kaprog' 
             ? `Filter dan unduh laporan prakerin jurusan ${user.jurusan}` 
