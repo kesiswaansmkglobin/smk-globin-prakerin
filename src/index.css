@@ -96,6 +96,13 @@
     --input: 220 35% 16%;
     --ring: 186 100% 57%;
   }
+  
+  /* Mobile-specific enhancements */
+  @media (max-width: 768px) {
+    :root {
+      --radius: 0.375rem;
+    }
+  }
 }
 
 @layer base {
