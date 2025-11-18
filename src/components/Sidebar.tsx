@@ -64,9 +64,9 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
   });
 
   return (
-    <Card className={`${collapsed ? 'w-16' : 'w-64'} h-screen rounded-none border-r border-border/50 card-gradient transition-all duration-300 relative overflow-hidden`}>
+    <Card className={`${collapsed ? 'w-16' : 'w-64'} min-h-screen h-full rounded-none border-r border-border/50 card-gradient transition-all duration-300 relative overflow-hidden flex flex-col`}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-50"></div>
-      <div className={`${collapsed ? 'p-2' : 'p-6'} h-full flex flex-col`}>
+      <div className={`${collapsed ? 'p-2' : 'p-6'} flex-1 flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className={`${collapsed ? 'hidden' : 'flex items-center space-x-3 flex-1'}`}>
@@ -114,7 +114,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
         )}
 
         {/* Navigation Menu with ScrollArea */}
-        <ScrollArea className="flex-1 -mx-2 px-2">
+        <ScrollArea className="flex-1 -mx-2 px-2 my-4">
           <nav className="space-y-2 pr-4">
             {filteredMenuItems.map((item) => {
               const Icon = item.icon;
@@ -141,7 +141,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
         </ScrollArea>
 
         {/* Logout Button - properly positioned within sidebar */}
-        <div className="mt-auto pt-6">
+        <div className="mt-auto pt-4 border-t border-border/50">
           <Button 
             variant="ghost" 
             size={collapsed ? "sm" : "default"}

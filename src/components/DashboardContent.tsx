@@ -98,7 +98,7 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 slide-up" style={{animationDelay: '0.1s'}}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 slide-up" style={{animationDelay: '0.1s'}}>
         {(user?.role === 'admin' || user?.role === 'kepala_sekolah') && (
           <StatCard
             title="Total Jurusan"
@@ -139,7 +139,7 @@ const DashboardContent = ({ user }: DashboardContentProps) => {
       {/* Recent Prakerin Data */}
       <Card className="card-gradient border-border/50 slide-up" style={{animationDelay: '0.2s'}}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
             <Briefcase className="h-5 w-5 text-primary" />
             Data Prakerin Terbaru
           </CardTitle>

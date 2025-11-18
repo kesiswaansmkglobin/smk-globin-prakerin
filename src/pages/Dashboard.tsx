@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '@/components/Sidebar';
+import BottomNav from '@/components/BottomNav';
 import DashboardContent from '@/components/DashboardContent';
 import JurusanContent from '@/components/JurusanContent';
 import PenggunaContent from '@/components/PenggunaContent';
@@ -11,6 +12,7 @@ import KelasContent from '@/components/KelasContent';
 import SiswaContent from '@/components/SiswaContent';
 import PengaturanContent from '@/components/PengaturanContent';
 import PlaceholderContent from '@/components/PlaceholderContent';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export type MenuType = 'dashboard' | 'sekolah' | 'jurusan' | 'kelas' | 'siswa' | 'prakerin' | 'laporan' | 'pengguna' | 'pengaturan';
 
@@ -19,6 +21,7 @@ const Dashboard = () => {
   const [user, setUser] = useState<any>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -58,21 +61,35 @@ const Dashboard = () => {
     return null;
   }
 
-  // Standard layout for all users (admin, kaprog, kepala_sekolah)
+  // Responsive layout for all users (admin, kaprog, kepala_sekolah)
   return (
-    <div className="min-h-screen bg-background flex">
-      <Sidebar 
-        activeMenu={activeMenu} 
-        setActiveMenu={setActiveMenu}
-        user={user}
-        collapsed={sidebarCollapsed}
-        setCollapsed={setSidebarCollapsed}
-      />
-      <main className="flex-1 overflow-auto">
-        <div className="p-6">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+      {/* Desktop Sidebar - Hidden on mobile */}
+      {!isMobile && (
+        <Sidebar 
+          activeMenu={activeMenu} 
+          setActiveMenu={setActiveMenu}
+          user={user}
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
+        />
+      )}
+      
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto pb-20 md:pb-0">
+        <div className="p-4 md:p-6">
           {renderContent()}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && (
+        <BottomNav 
+          activeMenu={activeMenu} 
+          setActiveMenu={setActiveMenu}
+          user={user}
+        />
+      )}
     </div>
   );
 };
