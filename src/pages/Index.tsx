@@ -18,7 +18,7 @@ const Index = () => {
           </div>
         </div>
         
-        <h1 className="text-4xl font-bold gradient-text mb-4">
+        <h1 className="text-4xl font-bold text-primary mb-4">
           SIM Prakerin SMK GLOBIN
         </h1>
         <p className="text-xl text-muted-foreground mb-2">

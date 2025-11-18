@@ -158,7 +158,7 @@ const SekolahContent = ({ user }: SekolahContentProps) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Data Sekolah</h1>
+          <h1 className="text-3xl font-bold text-primary">Data Sekolah</h1>
           <p className="text-muted-foreground">Kelola informasi sekolah</p>
         </div>
 

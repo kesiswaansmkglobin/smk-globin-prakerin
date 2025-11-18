@@ -233,7 +233,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
     <div className="space-y-6 relative">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold gradient-text">Data Siswa</h1>
+          <h1 className="text-3xl font-bold text-primary">Data Siswa</h1>
           <p className="text-muted-foreground">Kelola data siswa sekolah</p>
         </div>
 

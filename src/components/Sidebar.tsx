@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MenuType } from '@/pages/Dashboard';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface SidebarProps {
   activeMenu: MenuType;
@@ -76,7 +77,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
               className="h-12 w-12 object-contain"
             />
             <div>
-              <h2 className="text-lg font-bold gradient-text">SIM Prakerin</h2>
+              <h2 className="text-lg font-bold text-primary">SIM Prakerin</h2>
               <p className="text-xs text-muted-foreground">SMK GLOBIN BOGOR</p>
             </div>
           </div>
@@ -89,14 +90,17 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
               />
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className="hover:bg-secondary/50"
-          >
-            {collapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            {!collapsed && <ThemeToggle />}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCollapsed(!collapsed)}
+              className="hover:bg-secondary/50"
+            >
+              {collapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
 
         {/* User Info */}

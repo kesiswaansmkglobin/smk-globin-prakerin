@@ -1,0 +1,35 @@
+{
+  "name": "SMK Globin Prakerin - Sistem Informasi Manajemen Prakerin",
+  "short_name": "SIM Prakerin",
+  "description": "Sistem Informasi Manajemen Prakerin SMK Globin Bogor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#22d3ee",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/lovable-uploads/05a99674-2f4f-42a1-b184-4bab79cc07c7.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/lovable-uploads/05a99674-2f4f-42a1-b184-4bab79cc07c7.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Buka Dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/lovable-uploads/05a99674-2f4f-42a1-b184-4bab79cc07c7.png", "sizes": "96x96" }]
+    }
+  ]
+}
