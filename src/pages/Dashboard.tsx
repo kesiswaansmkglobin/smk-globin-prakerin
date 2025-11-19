@@ -1,19 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSwipeable } from 'react-swipeable';
 import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
-import DashboardContent from '@/components/DashboardContent';
-import JurusanContent from '@/components/JurusanContent';
-import PenggunaContent from '@/components/PenggunaContent';
-import PrakerinContent from '@/components/PrakerinContent';
-import LaporanContent from '@/components/LaporanContent';
-import SekolahContent from '@/components/SekolahContent';
-import KelasContent from '@/components/KelasContent';
-import SiswaContent from '@/components/SiswaContent';
-import PengaturanContent from '@/components/PengaturanContent';
-import PlaceholderContent from '@/components/PlaceholderContent';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { useIsMobile } from '@/hooks/use-mobile';
+
+// Lazy load heavy content components for better performance
+const DashboardContent = lazy(() => import('@/components/DashboardContent'));
+const JurusanContent = lazy(() => import('@/components/JurusanContent'));
+const PenggunaContent = lazy(() => import('@/components/PenggunaContent'));
+const PrakerinContent = lazy(() => import('@/components/PrakerinContent'));
+const LaporanContent = lazy(() => import('@/components/LaporanContent'));
+const SekolahContent = lazy(() => import('@/components/SekolahContent'));
+const KelasContent = lazy(() => import('@/components/KelasContent'));
+const SiswaContent = lazy(() => import('@/components/SiswaContent'));
+const PengaturanContent = lazy(() => import('@/components/PengaturanContent'));
+const PlaceholderContent = lazy(() => import('@/components/PlaceholderContent'));
 
 export type MenuType = 'dashboard' | 'sekolah' | 'jurusan' | 'kelas' | 'siswa' | 'prakerin' | 'laporan' | 'pengguna' | 'pengaturan';
 
@@ -102,7 +105,9 @@ const Dashboard = () => {
       {/* Main Content */}
       <main {...handlers} className="flex-1 overflow-auto pb-20 md:pb-0">
         <div className="p-4 md:p-6">
-          {renderContent()}
+          <Suspense fallback={<LoadingSpinner />}>
+            {renderContent()}
+          </Suspense>
         </div>
       </main>
 
