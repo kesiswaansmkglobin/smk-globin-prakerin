@@ -10,5 +10,15 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# Robots.txt for SIM Prakerin SMK GLOBIN
+# Updated for production deployment
+
 User-agent: *
 Allow: /
+
+# Disallow admin and auth pages from crawling
+Disallow: /dashboard
+Disallow: /login
+
+# Sitemap (update with your actual domain)
+# Sitemap: https://yourdomain.com/sitemap.xml
