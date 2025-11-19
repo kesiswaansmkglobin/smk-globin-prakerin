@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface UseSupabaseQueryOptions {
   table: string;
@@ -8,6 +9,7 @@ interface UseSupabaseQueryOptions {
   filters?: Record<string, any>;
   orderBy?: { column: string; ascending?: boolean };
   dependencies?: any[];
+  enabled?: boolean;
 }
 
 export function useSupabaseQuery<T = any>({
@@ -15,20 +17,17 @@ export function useSupabaseQuery<T = any>({
   select = '*',
   filters = {},
   orderBy,
-  dependencies = []
+  dependencies = [],
+  enabled = true
 }: UseSupabaseQueryOptions) {
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async () => {
+  // Create unique query key based on params
+  const queryKey = [table, select, filters, orderBy];
+
+  const fetchData = async () => {
     try {
-      setLoading(true);
-      setError(null);
-
-      console.log(`Fetching data from ${table}...`);
-      
       let query = (supabase as any).from(table).select(select);
 
       // Apply filters more efficiently
@@ -45,41 +44,40 @@ export function useSupabaseQuery<T = any>({
 
       const { data: result, error: queryError } = await query;
 
-      console.log(`Query result for ${table}:`, { result, queryError });
-
       if (queryError) {
-        console.error(`Query error for ${table}:`, queryError);
         throw new Error(`Gagal memuat data dari ${table}: ${queryError.message}`);
       }
 
-      setData((result as T[]) || []);
-      console.log(`Successfully loaded ${((result as T[]) || []).length} items from ${table}`);
+      return (result as T[]) || [];
     } catch (err: any) {
       const errorMessage = err.message || 'Gagal memuat data';
-      setError(errorMessage);
-      console.error(`useSupabaseQuery error for ${table}:`, err);
       
-      // Always show meaningful errors
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      // Only show toast for user-facing errors
+      if (enabled) {
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+      }
       
-      // Set empty array on error to prevent rendering issues
-      setData([]);
-    } finally {
-      setLoading(false);
+      throw err;
     }
-  }, [table, select, JSON.stringify(filters), JSON.stringify(orderBy), toast]);
+  };
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData, ...dependencies]);
+  const { data = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey,
+    queryFn: fetchData,
+    enabled,
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const error = queryError ? (queryError as Error).message : null;
 
   const refetch = useCallback(() => {
-    fetchData();
-  }, [fetchData]);
+    queryClient.invalidateQueries({ queryKey });
+  }, [queryClient, queryKey]);
 
   return { data, loading, error, refetch };
 }

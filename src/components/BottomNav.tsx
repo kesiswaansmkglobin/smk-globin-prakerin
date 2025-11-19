@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { MenuType } from '@/pages/Dashboard';
 import { 
   LayoutDashboard, 
@@ -129,4 +129,4 @@ const BottomNav = ({ activeMenu, setActiveMenu, user }: BottomNavProps) => {
   );
 };
 
-export default BottomNav;
+export default memo(BottomNav);
