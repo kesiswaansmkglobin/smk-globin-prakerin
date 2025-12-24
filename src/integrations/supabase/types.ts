@@ -14,6 +14,186 @@ export type Database = {
   }
   public: {
     Tables: {
+      bimbingan: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          guru_pembimbing_id: string
+          id: string
+          kegiatan: string
+          paraf: boolean | null
+          prakerin_id: string
+          tanggal: string
+          updated_at: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          guru_pembimbing_id: string
+          id?: string
+          kegiatan: string
+          paraf?: boolean | null
+          prakerin_id: string
+          tanggal: string
+          updated_at?: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          guru_pembimbing_id?: string
+          id?: string
+          kegiatan?: string
+          paraf?: boolean | null
+          prakerin_id?: string
+          tanggal?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bimbingan_guru_pembimbing_id_fkey"
+            columns: ["guru_pembimbing_id"]
+            isOneToOne: false
+            referencedRelation: "guru_pembimbing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bimbingan_prakerin_id_fkey"
+            columns: ["prakerin_id"]
+            isOneToOne: false
+            referencedRelation: "prakerin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guru_pembimbing: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          jurusan_id: string | null
+          nama: string
+          nip: string | null
+          telepon: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          jurusan_id?: string | null
+          nama: string
+          nip?: string | null
+          telepon?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          jurusan_id?: string | null
+          nama?: string
+          nip?: string | null
+          telepon?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guru_pembimbing_jurusan_id_fkey"
+            columns: ["jurusan_id"]
+            isOneToOne: false
+            referencedRelation: "jurusan"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_penilaian: {
+        Row: {
+          bobot: number | null
+          created_at: string
+          id: string
+          jurusan_id: string | null
+          kategori: string | null
+          nama: string
+          updated_at: string
+        }
+        Insert: {
+          bobot?: number | null
+          created_at?: string
+          id?: string
+          jurusan_id?: string | null
+          kategori?: string | null
+          nama: string
+          updated_at?: string
+        }
+        Update: {
+          bobot?: number | null
+          created_at?: string
+          id?: string
+          jurusan_id?: string | null
+          kategori?: string | null
+          nama?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_penilaian_jurusan_id_fkey"
+            columns: ["jurusan_id"]
+            isOneToOne: false
+            referencedRelation: "jurusan"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jadwal_sidang: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          jurusan_id: string
+          nama: string
+          ruangan: string | null
+          tanggal: string
+          updated_at: string
+          waktu_mulai: string
+          waktu_selesai: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jurusan_id: string
+          nama: string
+          ruangan?: string | null
+          tanggal: string
+          updated_at?: string
+          waktu_mulai: string
+          waktu_selesai: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jurusan_id?: string
+          nama?: string
+          ruangan?: string | null
+          tanggal?: string
+          updated_at?: string
+          waktu_mulai?: string
+          waktu_selesai?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jadwal_sidang_jurusan_id_fkey"
+            columns: ["jurusan_id"]
+            isOneToOne: false
+            referencedRelation: "jurusan"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jurusan: {
         Row: {
           created_at: string
@@ -73,10 +253,268 @@ export type Database = {
           },
         ]
       }
+      laporan_prakerin: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deskripsi: string | null
+          id: string
+          judul: string
+          jurusan_id: string
+          tenggat_waktu: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deskripsi?: string | null
+          id?: string
+          judul: string
+          jurusan_id: string
+          tenggat_waktu: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deskripsi?: string | null
+          id?: string
+          judul?: string
+          jurusan_id?: string
+          tenggat_waktu?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "laporan_prakerin_jurusan_id_fkey"
+            columns: ["jurusan_id"]
+            isOneToOne: false
+            referencedRelation: "jurusan"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nilai_prakerin: {
+        Row: {
+          created_at: string
+          dinilai_oleh: string | null
+          id: string
+          item_penilaian_id: string
+          keterangan: string | null
+          nilai: number
+          prakerin_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dinilai_oleh?: string | null
+          id?: string
+          item_penilaian_id: string
+          keterangan?: string | null
+          nilai: number
+          prakerin_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dinilai_oleh?: string | null
+          id?: string
+          item_penilaian_id?: string
+          keterangan?: string | null
+          nilai?: number
+          prakerin_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nilai_prakerin_dinilai_oleh_fkey"
+            columns: ["dinilai_oleh"]
+            isOneToOne: false
+            referencedRelation: "guru_pembimbing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nilai_prakerin_item_penilaian_id_fkey"
+            columns: ["item_penilaian_id"]
+            isOneToOne: false
+            referencedRelation: "item_penilaian"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nilai_prakerin_prakerin_id_fkey"
+            columns: ["prakerin_id"]
+            isOneToOne: false
+            referencedRelation: "prakerin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      penguji_sidang: {
+        Row: {
+          created_at: string
+          guru_pembimbing_id: string
+          id: string
+          jadwal_sidang_id: string
+          peran: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          guru_pembimbing_id: string
+          id?: string
+          jadwal_sidang_id: string
+          peran?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          guru_pembimbing_id?: string
+          id?: string
+          jadwal_sidang_id?: string
+          peran?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "penguji_sidang_guru_pembimbing_id_fkey"
+            columns: ["guru_pembimbing_id"]
+            isOneToOne: false
+            referencedRelation: "guru_pembimbing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "penguji_sidang_jadwal_sidang_id_fkey"
+            columns: ["jadwal_sidang_id"]
+            isOneToOne: false
+            referencedRelation: "jadwal_sidang"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pengumpulan_laporan: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          id: string
+          laporan_id: string
+          nilai: number | null
+          prakerin_id: string | null
+          siswa_id: string
+          status: string | null
+          tanggal_pengumpulan: string | null
+          updated_at: string
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          laporan_id: string
+          nilai?: number | null
+          prakerin_id?: string | null
+          siswa_id: string
+          status?: string | null
+          tanggal_pengumpulan?: string | null
+          updated_at?: string
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          laporan_id?: string
+          nilai?: number | null
+          prakerin_id?: string | null
+          siswa_id?: string
+          status?: string | null
+          tanggal_pengumpulan?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pengumpulan_laporan_laporan_id_fkey"
+            columns: ["laporan_id"]
+            isOneToOne: false
+            referencedRelation: "laporan_prakerin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pengumpulan_laporan_prakerin_id_fkey"
+            columns: ["prakerin_id"]
+            isOneToOne: false
+            referencedRelation: "prakerin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pengumpulan_laporan_siswa_id_fkey"
+            columns: ["siswa_id"]
+            isOneToOne: false
+            referencedRelation: "siswa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      peserta_sidang: {
+        Row: {
+          catatan: string | null
+          created_at: string
+          id: string
+          jadwal_sidang_id: string
+          nilai_sidang: number | null
+          prakerin_id: string | null
+          siswa_id: string
+          updated_at: string
+          urutan: number | null
+        }
+        Insert: {
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          jadwal_sidang_id: string
+          nilai_sidang?: number | null
+          prakerin_id?: string | null
+          siswa_id: string
+          updated_at?: string
+          urutan?: number | null
+        }
+        Update: {
+          catatan?: string | null
+          created_at?: string
+          id?: string
+          jadwal_sidang_id?: string
+          nilai_sidang?: number | null
+          prakerin_id?: string | null
+          siswa_id?: string
+          updated_at?: string
+          urutan?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "peserta_sidang_jadwal_sidang_id_fkey"
+            columns: ["jadwal_sidang_id"]
+            isOneToOne: false
+            referencedRelation: "jadwal_sidang"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "peserta_sidang_prakerin_id_fkey"
+            columns: ["prakerin_id"]
+            isOneToOne: false
+            referencedRelation: "prakerin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "peserta_sidang_siswa_id_fkey"
+            columns: ["siswa_id"]
+            isOneToOne: false
+            referencedRelation: "siswa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prakerin: {
         Row: {
           alamat_prakerin: string | null
           created_at: string
+          guru_pembimbing_id: string | null
           id: string
           keterangan: string | null
           nilai_akhir: number | null
@@ -92,6 +530,7 @@ export type Database = {
         Insert: {
           alamat_prakerin?: string | null
           created_at?: string
+          guru_pembimbing_id?: string | null
           id?: string
           keterangan?: string | null
           nilai_akhir?: number | null
@@ -107,6 +546,7 @@ export type Database = {
         Update: {
           alamat_prakerin?: string | null
           created_at?: string
+          guru_pembimbing_id?: string | null
           id?: string
           keterangan?: string | null
           nilai_akhir?: number | null
@@ -120,6 +560,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "prakerin_guru_pembimbing_id_fkey"
+            columns: ["guru_pembimbing_id"]
+            isOneToOne: false
+            referencedRelation: "guru_pembimbing"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "prakerin_siswa_id_fkey"
             columns: ["siswa_id"]
@@ -306,6 +753,10 @@ export type Database = {
           role: string
           username: string
         }[]
+      }
+      calculate_nilai_akhir: {
+        Args: { p_prakerin_id: string }
+        Returns: number
       }
       can_access_jurusan: {
         Args: { jurusan_name: string; user_id: string }
