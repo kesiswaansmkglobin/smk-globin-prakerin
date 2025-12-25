@@ -10,7 +10,12 @@ import {
   GraduationCap, 
   UserCircle,
   Settings,
-  MoreHorizontal
+  MoreHorizontal,
+  UserCheck,
+  ClipboardList,
+  Star,
+  FileCheck,
+  Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,21 +36,29 @@ interface BottomNavProps {
 const BottomNav = ({ activeMenu, setActiveMenu, user }: BottomNavProps) => {
   const allMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'sekolah', label: 'Sekolah', icon: School },
-    { id: 'jurusan', label: 'Jurusan', icon: BookOpen },
+    { id: 'sekolah', label: 'Sekolah', icon: School, adminOnly: true },
+    { id: 'jurusan', label: 'Jurusan', icon: BookOpen, adminOnly: true },
     { id: 'kelas', label: 'Kelas', icon: GraduationCap },
     { id: 'siswa', label: 'Siswa', icon: UserCircle },
+    { id: 'guru_pembimbing', label: 'Guru', icon: UserCheck },
     { id: 'prakerin', label: 'Prakerin', icon: Briefcase },
+    { id: 'bimbingan', label: 'Bimbingan', icon: ClipboardList },
+    { id: 'nilai', label: 'Nilai', icon: Star },
+    { id: 'laporan_prakerin', label: 'Laporan PKL', icon: FileCheck },
+    { id: 'jadwal_sidang', label: 'Sidang', icon: Calendar },
     { id: 'laporan', label: 'Laporan', icon: FileText },
     { id: 'pengguna', label: 'Pengguna', icon: Users, adminOnly: true },
     { id: 'pengaturan', label: 'Pengaturan', icon: Settings, adminOnly: true },
   ];
 
   const filteredMenuItems = allMenuItems.filter(item => {
-    if (item.adminOnly && user?.role !== 'admin') return false;
+    // Admin can access everything
+    if (user?.role === 'admin') return true;
+    
+    if (item.adminOnly) return false;
     
     if (user?.role === 'kaprog') {
-      return ['dashboard', 'siswa', 'prakerin', 'laporan'].includes(item.id);
+      return ['dashboard', 'kelas', 'siswa', 'guru_pembimbing', 'prakerin', 'bimbingan', 'nilai', 'laporan_prakerin', 'jadwal_sidang', 'laporan'].includes(item.id);
     }
     
     if (user?.role === 'kepala_sekolah') {

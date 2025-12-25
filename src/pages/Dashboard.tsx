@@ -18,7 +18,28 @@ const SiswaContent = lazy(() => import('@/components/SiswaContent'));
 const PengaturanContent = lazy(() => import('@/components/PengaturanContent'));
 const PlaceholderContent = lazy(() => import('@/components/PlaceholderContent'));
 
-export type MenuType = 'dashboard' | 'sekolah' | 'jurusan' | 'kelas' | 'siswa' | 'prakerin' | 'laporan' | 'pengguna' | 'pengaturan';
+// New menu components
+const GuruPembimbingContent = lazy(() => import('@/components/GuruPembimbingContent'));
+const BimbinganContent = lazy(() => import('@/components/BimbinganContent'));
+const NilaiPrakerinContent = lazy(() => import('@/components/NilaiPrakerinContent'));
+const LaporanPrakerinContent = lazy(() => import('@/components/LaporanPrakerinContent'));
+const JadwalSidangContent = lazy(() => import('@/components/JadwalSidangContent'));
+
+export type MenuType = 
+  | 'dashboard' 
+  | 'sekolah' 
+  | 'jurusan' 
+  | 'kelas' 
+  | 'siswa' 
+  | 'prakerin' 
+  | 'guru_pembimbing'
+  | 'bimbingan'
+  | 'nilai'
+  | 'laporan_prakerin'
+  | 'jadwal_sidang'
+  | 'laporan' 
+  | 'pengguna' 
+  | 'pengaturan';
 
 const Dashboard = () => {
   const [activeMenu, setActiveMenu] = useState<MenuType>('dashboard');
@@ -50,18 +71,32 @@ const Dashboard = () => {
         return <SiswaContent user={user} />;
       case 'prakerin':
         return <PrakerinContent user={user} />;
+      case 'guru_pembimbing':
+        return <GuruPembimbingContent user={user} />;
+      case 'bimbingan':
+        return <BimbinganContent user={user} />;
+      case 'nilai':
+        return <NilaiPrakerinContent user={user} />;
+      case 'laporan_prakerin':
+        return <LaporanPrakerinContent user={user} />;
+      case 'jadwal_sidang':
+        return <JadwalSidangContent user={user} />;
       case 'laporan':
         return <LaporanContent user={user} />;
       case 'pengguna':
-        return user?.role === 'admin' ? <PenggunaContent user={user} /> : <PlaceholderContent title="Akses Ditolak" />;
+        return (user?.role === 'admin') ? <PenggunaContent user={user} /> : <PlaceholderContent title="Akses Ditolak" />;
       case 'pengaturan':
-        return user?.role === 'admin' ? <PengaturanContent user={user} /> : <PlaceholderContent title="Akses Ditolak" />;
+        return (user?.role === 'admin') ? <PengaturanContent user={user} /> : <PlaceholderContent title="Akses Ditolak" />;
       default:
         return <DashboardContent user={user} />;
     }
   };
 
-  const menuItems: MenuType[] = ['dashboard', 'sekolah', 'jurusan', 'kelas', 'siswa', 'prakerin', 'laporan', 'pengguna', 'pengaturan'];
+  const menuItems: MenuType[] = [
+    'dashboard', 'sekolah', 'jurusan', 'kelas', 'siswa', 'prakerin', 
+    'guru_pembimbing', 'bimbingan', 'nilai', 'laporan_prakerin', 'jadwal_sidang',
+    'laporan', 'pengguna', 'pengaturan'
+  ];
   
   const handlers = useSwipeable({
     onSwipedLeft: () => {
@@ -88,7 +123,6 @@ const Dashboard = () => {
     return null;
   }
 
-  // Responsive layout for all users (admin, kaprog, kepala_sekolah)
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Desktop Sidebar - Hidden on mobile */}

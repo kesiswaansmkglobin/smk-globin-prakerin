@@ -1,8 +1,5 @@
-import React, { memo, useMemo, useCallback } from 'react';
-import { FixedSizeList } from 'react-window';
-
-const List = FixedSizeList;
-import { Table, TableHead, TableHeader, TableRow, TableCell, TableBody } from '@/components/ui/table';
+import React, { memo, useMemo, useCallback, CSSProperties, ReactElement } from 'react';
+import { List } from 'react-window';
 
 interface Column<T> {
   key: string;
@@ -22,18 +19,25 @@ interface VirtualizedTableProps<T> {
   className?: string;
 }
 
-interface RowProps<T> {
-  index: number;
-  style: React.CSSProperties;
-  data: {
-    items: T[];
-    columns: Column<T>[];
-    keyExtractor: (item: T) => string | number;
-  };
+interface RowData<T> {
+  items: T[];
+  columns: Column<T>[];
+  keyExtractor: (item: T) => string | number;
 }
 
-const Row = memo(<T,>({ index, style, data }: RowProps<T>) => {
-  const { items, columns } = data;
+interface RowProps<T> {
+  ariaAttributes: {
+    "aria-posinset": number;
+    "aria-setsize": number;
+    role: "listitem";
+  };
+  index: number;
+  style: CSSProperties;
+  items: T[];
+  columns: Column<T>[];
+}
+
+function RowComponent<T>({ index, style, items, columns }: RowProps<T>): ReactElement {
   const item = items[index];
 
   return (
@@ -49,7 +53,7 @@ const Row = memo(<T,>({ index, style, data }: RowProps<T>) => {
       ))}
     </div>
   );
-}) as <T,>(props: RowProps<T>) => React.ReactElement;
+}
 
 function VirtualizedTableComponent<T>({
   data,
@@ -63,16 +67,6 @@ function VirtualizedTableComponent<T>({
   const totalWidth = useMemo(() => {
     return columns.reduce((acc, col) => acc + (col.width || 150), 0);
   }, [columns]);
-
-  const itemData = useMemo(() => ({
-    items: data,
-    columns,
-    keyExtractor
-  }), [data, columns, keyExtractor]);
-
-  const getItemKey = useCallback((index: number, data: typeof itemData) => {
-    return data.keyExtractor(data.items[index]);
-  }, []);
 
   if (data.length === 0) {
     return (
@@ -105,15 +99,12 @@ function VirtualizedTableComponent<T>({
       {/* Virtualized Body */}
       <div style={{ minWidth: totalWidth }}>
         <List
-          height={listHeight}
-          itemCount={data.length}
-          itemSize={rowHeight}
-          width="100%"
-          itemData={itemData}
-          itemKey={getItemKey}
-        >
-          {Row as any}
-        </List>
+          style={{ height: listHeight, width: '100%' }}
+          rowCount={data.length}
+          rowHeight={rowHeight}
+          rowProps={{ items: data, columns }}
+          rowComponent={RowComponent as any}
+        />
       </div>
     </div>
   );
