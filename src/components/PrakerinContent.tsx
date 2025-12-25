@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Briefcase } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 
 import { canEditPrakerin } from '@/utils/permissions';
 
@@ -31,10 +32,18 @@ interface KelasData {
   jurusan: { nama: string } | null;
 }
 
+interface GuruPembimbingData {
+  id: string;
+  nama: string;
+  nip: string | null;
+  jurusan: { nama: string } | null;
+}
+
 const PrakerinContent = ({ user }: PrakerinContentProps) => {
   const [prakerin, setPrakerin] = useState<any[]>([]);
   const [siswaList, setSiswaList] = useState<SiswaData[]>([]);
   const [kelasList, setKelasList] = useState<KelasData[]>([]);
+  const [guruPembimbingList, setGuruPembimbingList] = useState<GuruPembimbingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPrakerin, setEditingPrakerin] = useState<any>(null);
@@ -47,12 +56,20 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
     alamat_prakerin: '',
     tanggal_mulai: '',
     tanggal_selesai: '',
-    pembimbing_sekolah: '',
+    guru_pembimbing_id: '',
     pembimbing_industri: '',
-    nilai_akhir: '',
+    status: 'aktif',
     keterangan: ''
   });
   const { toast } = useToast();
+
+  // Realtime subscription for prakerin updates
+  useRealtimeSubscription({
+    table: 'prakerin',
+    onInsert: () => loadData(),
+    onUpdate: () => loadData(),
+    onDelete: () => loadData(),
+  });
 
   useEffect(() => {
     loadData();
@@ -93,6 +110,11 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
             jurusan_id,
             kelas!inner(nama),
             jurusan!inner(nama)
+          ),
+          guru_pembimbing(
+            id,
+            nama,
+            nip
           )
         `)
         .order('created_at', { ascending: false });
@@ -112,25 +134,34 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
         .select('id, nis, nama, jurusan_id, kelas(nama), jurusan(nama)')
         .order('nama');
 
+      let guruQuery = supabase
+        .from('guru_pembimbing')
+        .select('id, nama, nip, jurusan_id, jurusan(nama)')
+        .order('nama');
+
       // Filter by user's jurusan if kaprog
       if (user?.role === 'kaprog' && userJurusanId) {
         kelasQuery = kelasQuery.eq('jurusan_id', userJurusanId);
         siswaQuery = siswaQuery.eq('jurusan_id', userJurusanId);
+        guruQuery = guruQuery.eq('jurusan_id', userJurusanId);
       }
 
-      const [prakerinRes, kelasRes, siswaRes] = await Promise.all([
+      const [prakerinRes, kelasRes, siswaRes, guruRes] = await Promise.all([
         prakerinQuery,
         kelasQuery,
-        siswaQuery
+        siswaQuery,
+        guruQuery
       ]);
 
       if (prakerinRes.error) throw prakerinRes.error;
       if (kelasRes.error) throw kelasRes.error;
       if (siswaRes.error) throw siswaRes.error;
+      if (guruRes.error) throw guruRes.error;
 
       setPrakerin(prakerinRes.data || []);
       setKelasList(kelasRes.data || []);
       setSiswaList(siswaRes.data || []);
+      setGuruPembimbingList(guruRes.data || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -158,8 +189,15 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
     
     try {
       const data = {
-        ...formData,
-        nilai_akhir: formData.nilai_akhir ? parseInt(formData.nilai_akhir) : null
+        siswa_id: formData.siswa_id,
+        tempat_prakerin: formData.tempat_prakerin,
+        alamat_prakerin: formData.alamat_prakerin,
+        tanggal_mulai: formData.tanggal_mulai,
+        tanggal_selesai: formData.tanggal_selesai,
+        guru_pembimbing_id: formData.guru_pembimbing_id || null,
+        pembimbing_industri: formData.pembimbing_industri,
+        status: formData.status,
+        keterangan: formData.keterangan
       };
 
       if (editingPrakerin) {
@@ -215,9 +253,9 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
       alamat_prakerin: item.alamat_prakerin || '',
       tanggal_mulai: item.tanggal_mulai || '',
       tanggal_selesai: item.tanggal_selesai || '',
-      pembimbing_sekolah: item.pembimbing_sekolah || '',
+      guru_pembimbing_id: item.guru_pembimbing_id || '',
       pembimbing_industri: item.pembimbing_industri || '',
-      nilai_akhir: item.nilai_akhir?.toString() || '',
+      status: item.status || 'aktif',
       keterangan: item.keterangan || ''
     });
     setDialogOpen(true);
@@ -256,9 +294,9 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
       alamat_prakerin: '',
       tanggal_mulai: '',
       tanggal_selesai: '',
-      pembimbing_sekolah: '',
+      guru_pembimbing_id: '',
       pembimbing_industri: '',
-      nilai_akhir: '',
+      status: 'aktif',
       keterangan: ''
     });
     setSelectedKelas('');
@@ -276,6 +314,19 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
 
   const getSelectedSiswaData = () => {
     return siswaList.find(s => s.id === selectedSiswa);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'aktif':
+        return <Badge className="bg-green-500/20 text-green-500 border-green-500/30">Aktif</Badge>;
+      case 'selesai':
+        return <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30">Selesai</Badge>;
+      case 'batal':
+        return <Badge className="bg-red-500/20 text-red-500 border-red-500/30">Batal</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   return (
@@ -424,16 +475,29 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                     </div>
                   </div>
 
+                  {/* Guru Pembimbing Dropdown */}
                   <div className="space-y-2">
-                    <Label htmlFor="pembimbing_sekolah">Guru Pembimbing</Label>
-                    <Input
-                      id="pembimbing_sekolah"
-                      value={formData.pembimbing_sekolah}
-                      onChange={(e) => setFormData(prev => ({ ...prev, pembimbing_sekolah: e.target.value }))}
-                      placeholder="Nama guru pembimbing"
-                      className="bg-input/50 border-border/50"
-                      required
-                    />
+                    <Label htmlFor="guru_pembimbing">Guru Pembimbing</Label>
+                    <Select 
+                      value={formData.guru_pembimbing_id} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, guru_pembimbing_id: value }))}
+                    >
+                      <SelectTrigger className="bg-input/50 border-border/50">
+                        <SelectValue placeholder="Pilih guru pembimbing" />
+                      </SelectTrigger>
+                      <SelectContent className="card-gradient border-border/50">
+                        {guruPembimbingList.map((guru) => (
+                          <SelectItem key={guru.id} value={guru.id}>
+                            {guru.nama} {guru.nip ? `- ${guru.nip}` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {guruPembimbingList.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Belum ada guru pembimbing. Tambahkan melalui menu Guru Pembimbing.
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -449,17 +513,20 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="nilai_akhir">Nilai Akhir</Label>
-                      <Input
-                        id="nilai_akhir"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={formData.nilai_akhir}
-                        onChange={(e) => setFormData(prev => ({ ...prev, nilai_akhir: e.target.value }))}
-                        placeholder="0-100"
-                        className="bg-input/50 border-border/50"
-                      />
+                      <Label htmlFor="status">Status</Label>
+                      <Select 
+                        value={formData.status} 
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                      >
+                        <SelectTrigger className="bg-input/50 border-border/50">
+                          <SelectValue placeholder="Pilih status" />
+                        </SelectTrigger>
+                        <SelectContent className="card-gradient border-border/50">
+                          <SelectItem value="aktif">Aktif</SelectItem>
+                          <SelectItem value="selesai">Selesai</SelectItem>
+                          <SelectItem value="batal">Batal</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     
                     <div className="space-y-2">
@@ -514,10 +581,10 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                     <TableHead>NIS</TableHead>
                     <TableHead>Nama Siswa</TableHead>
                     <TableHead>Kelas</TableHead>
-                    <TableHead>Jurusan</TableHead>
                     <TableHead>Tempat Prakerin</TableHead>
+                    <TableHead>Guru Pembimbing</TableHead>
                     <TableHead>Periode</TableHead>
-                    <TableHead>Nilai</TableHead>
+                    <TableHead>Status</TableHead>
                     {canEdit && <TableHead className="text-right">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -530,10 +597,8 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                       <TableCell>
                         <Badge variant="outline">{item.siswa?.kelas?.nama}</Badge>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{item.siswa?.jurusan?.nama}</Badge>
-                      </TableCell>
                       <TableCell>{item.tempat_prakerin || '-'}</TableCell>
+                      <TableCell>{item.guru_pembimbing?.nama || '-'}</TableCell>
                       <TableCell>
                         {item.tanggal_mulai && item.tanggal_selesai 
                           ? `${formatDate(item.tanggal_mulai)} s/d ${formatDate(item.tanggal_selesai)}`
@@ -541,13 +606,7 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                         }
                       </TableCell>
                       <TableCell>
-                        {item.nilai_akhir ? (
-                          <Badge 
-                            variant={item.nilai_akhir >= 75 ? "default" : "destructive"}
-                          >
-                            {item.nilai_akhir}
-                          </Badge>
-                        ) : '-'}
+                        {getStatusBadge(item.status || 'aktif')}
                       </TableCell>
                       {canEdit && (
                         <TableCell className="text-right">

@@ -41,6 +41,46 @@ export const canEditPrakerin = (user: User | null): boolean => {
 };
 
 /**
+ * Check if user can edit guru pembimbing
+ * Admin and kaprog can edit
+ */
+export const canEditGuruPembimbing = (user: User | null): boolean => {
+  return user?.role === 'admin' || user?.role === 'kaprog';
+};
+
+/**
+ * Check if user can edit bimbingan
+ * Admin, kaprog, and guru pembimbing can edit
+ */
+export const canEditBimbingan = (user: User | null): boolean => {
+  return user?.role === 'admin' || user?.role === 'kaprog';
+};
+
+/**
+ * Check if user can edit nilai prakerin
+ * Admin, kaprog can edit
+ */
+export const canEditNilai = (user: User | null): boolean => {
+  return user?.role === 'admin' || user?.role === 'kaprog';
+};
+
+/**
+ * Check if user can edit laporan prakerin
+ * Admin, kaprog can edit
+ */
+export const canEditLaporanPrakerin = (user: User | null): boolean => {
+  return user?.role === 'admin' || user?.role === 'kaprog';
+};
+
+/**
+ * Check if user can edit jadwal sidang
+ * Admin, kaprog can edit
+ */
+export const canEditJadwalSidang = (user: User | null): boolean => {
+  return user?.role === 'admin' || user?.role === 'kaprog';
+};
+
+/**
  * Check if user can download reports
  * All authenticated users can download
  */

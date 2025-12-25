@@ -14,7 +14,12 @@ import {
   Settings,
   LogOut,
   Menu,
-  X 
+  X,
+  UserCheck,
+  ClipboardList,
+  Star,
+  FileCheck,
+  Calendar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MenuType } from '@/pages/Dashboard';
@@ -33,11 +38,16 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'sekolah', label: 'Data Sekolah', icon: School },
-    { id: 'jurusan', label: 'Data Jurusan', icon: BookOpen },
+    { id: 'sekolah', label: 'Data Sekolah', icon: School, adminOnly: true },
+    { id: 'jurusan', label: 'Data Jurusan', icon: BookOpen, adminOnly: true },
     { id: 'kelas', label: 'Data Kelas', icon: GraduationCap },
     { id: 'siswa', label: 'Data Siswa', icon: UserCircle },
+    { id: 'guru_pembimbing', label: 'Guru Pembimbing', icon: UserCheck },
     { id: 'prakerin', label: 'Data Prakerin', icon: Briefcase },
+    { id: 'bimbingan', label: 'Bimbingan', icon: ClipboardList },
+    { id: 'nilai', label: 'Nilai Prakerin', icon: Star },
+    { id: 'laporan_prakerin', label: 'Laporan Prakerin', icon: FileCheck },
+    { id: 'jadwal_sidang', label: 'Jadwal Sidang', icon: Calendar },
     { id: 'laporan', label: 'Rekap dan Laporan', icon: FileText },
     { id: 'pengguna', label: 'Data Pengguna', icon: Users, adminOnly: true },
     { id: 'pengaturan', label: 'Pengaturan', icon: Settings, adminOnly: true },
@@ -49,11 +59,15 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
   };
 
   const filteredMenuItems = menuItems.filter(item => {
-    if (item.adminOnly && user?.role !== 'admin') return false;
+    // Admin can access everything
+    if (user?.role === 'admin') return true;
     
-    // For kaprog, only show specific menus
+    // Skip admin-only items for non-admins
+    if (item.adminOnly) return false;
+    
+    // For kaprog, show relevant menus
     if (user?.role === 'kaprog') {
-      return ['dashboard', 'siswa', 'prakerin', 'laporan'].includes(item.id);
+      return ['dashboard', 'kelas', 'siswa', 'guru_pembimbing', 'prakerin', 'bimbingan', 'nilai', 'laporan_prakerin', 'jadwal_sidang', 'laporan'].includes(item.id);
     }
     
     // For kepala_sekolah, show all menus except admin-only
@@ -144,7 +158,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
           </nav>
         </ScrollArea>
 
-        {/* Logout Button - properly positioned within sidebar */}
+        {/* Logout Button */}
         <div className="mt-auto pt-4 border-t border-border/50">
           <Button 
             variant="ghost" 
