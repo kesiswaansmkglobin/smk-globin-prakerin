@@ -121,29 +121,43 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Try to authenticate user
+    // Try to authenticate as regular user first
     const { data: users, error } = await supabase
       .rpc('authenticate_user', {
         input_username: username,
         input_password: password
       })
 
-    if (error) {
-      // Log detailed error server-side only
-      console.error('Authentication error:', error)
-      recordFailedAttempt(clientIP)
-      
-      // Return generic error to client
-      return new Response(
-        JSON.stringify({ error: 'Invalid credentials' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    let userData = null
+    let userType = 'user' // 'user' or 'guru_pembimbing'
+
+    if (!error && users && users.length > 0) {
+      userData = users[0]
+    } else {
+      // Try to authenticate as guru pembimbing
+      const { data: guruData, error: guruError } = await supabase
+        .rpc('authenticate_guru_pembimbing', {
+          input_username: username,
+          input_password: password
+        })
+
+      if (!guruError && guruData && guruData.length > 0) {
+        userData = {
+          id: guruData[0].id,
+          name: guruData[0].nama,
+          username: guruData[0].username,
+          role: 'guru_pembimbing',
+          jurusan: guruData[0].jurusan_nama,
+          jurusan_id: guruData[0].jurusan_id,
+          nip: guruData[0].nip,
+          email: guruData[0].email,
+          guru_pembimbing_id: guruData[0].id
         }
-      )
+        userType = 'guru_pembimbing'
+      }
     }
 
-    if (!users || users.length === 0) {
+    if (!userData) {
       recordFailedAttempt(clientIP)
       return new Response(
         JSON.stringify({ error: 'Invalid credentials' }),
@@ -156,15 +170,14 @@ serve(async (req) => {
 
     // Authentication successful - clear failed attempts
     clearFailedAttempts(clientIP)
-
-    const userData = users[0]
     
     // Create or get Supabase Auth session for this user
-    // This generates a proper JWT token for RLS policies
-    const authEmail = `${userData.username}@internal.smkglobin.local`
+    const authEmail = userType === 'guru_pembimbing' 
+      ? `guru_${userData.username}@internal.smkglobin.local`
+      : `${userData.username}@internal.smkglobin.local`
     
     // Check if auth user exists using listUsers
-    const { data: listData, error: listError } = await supabase.auth.admin.listUsers()
+    const { data: listData } = await supabase.auth.admin.listUsers()
     const existingUser = listData?.users?.find(u => u.email === authEmail)
     
     let authUserId = existingUser?.id || null
@@ -180,7 +193,8 @@ serve(async (req) => {
           custom_user_id: userData.id,
           name: userData.name,
           role: userData.role,
-          jurusan: userData.jurusan
+          jurusan: userData.jurusan,
+          user_type: userType
         }
       })
       
@@ -199,16 +213,17 @@ serve(async (req) => {
     
     if (sessionError) {
       console.error('Session generation error:', sessionError)
-      // Still return success with user data, frontend will handle gracefully
     }
 
-    // Create role entry in user_roles table for secure role management using auth user id
+    // Create role entry in user_roles table for secure role management
     if (authUserId) {
+      const roleToInsert = userType === 'guru_pembimbing' ? 'guru_pembimbing' : userData.role
+      
       const { error: roleError } = await supabase
         .from('user_roles')
         .upsert({
           user_id: authUserId,
-          role: userData.role,
+          role: roleToInsert,
           jurusan: userData.jurusan
         }, {
           onConflict: 'user_id,role'
@@ -217,8 +232,18 @@ serve(async (req) => {
       if (roleError) {
         console.error('Error creating role entry:', roleError)
       }
-    } else {
-      console.warn('Auth user id not found for role upsert', { authEmail })
+
+      // For guru pembimbing, also update the user_id in guru_pembimbing table
+      if (userType === 'guru_pembimbing') {
+        const { error: updateError } = await supabase
+          .from('guru_pembimbing')
+          .update({ user_id: authUserId })
+          .eq('id', userData.guru_pembimbing_id)
+        
+        if (updateError) {
+          console.error('Error updating guru_pembimbing user_id:', updateError)
+        }
+      }
     }
 
     // Return user data with session token
@@ -230,7 +255,11 @@ serve(async (req) => {
           name: userData.name,
           username: userData.username,
           role: userData.role,
-          jurusan: userData.jurusan
+          jurusan: userData.jurusan,
+          jurusan_id: userData.jurusan_id,
+          guru_pembimbing_id: userData.guru_pembimbing_id,
+          nip: userData.nip,
+          email: userData.email
         },
         session: sessionData
       }),
@@ -241,11 +270,9 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    // Log detailed error server-side only
     console.error('Edge function error:', error)
     recordFailedAttempt(clientIP)
     
-    // Return generic error to client
     return new Response(
       JSON.stringify({ error: 'An error occurred. Please try again.' }),
       {

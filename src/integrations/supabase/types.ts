@@ -73,9 +73,11 @@ export type Database = {
           jurusan_id: string | null
           nama: string
           nip: string | null
+          password: string | null
           telepon: string | null
           updated_at: string
           user_id: string | null
+          username: string | null
         }
         Insert: {
           created_at?: string
@@ -84,9 +86,11 @@ export type Database = {
           jurusan_id?: string | null
           nama: string
           nip?: string | null
+          password?: string | null
           telepon?: string | null
           updated_at?: string
           user_id?: string | null
+          username?: string | null
         }
         Update: {
           created_at?: string
@@ -95,9 +99,11 @@ export type Database = {
           jurusan_id?: string | null
           nama?: string
           nip?: string | null
+          password?: string | null
           telepon?: string | null
           updated_at?: string
           user_id?: string | null
+          username?: string | null
         }
         Relationships: [
           {
@@ -744,6 +750,18 @@ export type Database = {
     }
     Functions: {
       allow_authenticated_access: { Args: never; Returns: boolean }
+      authenticate_guru_pembimbing: {
+        Args: { input_password: string; input_username: string }
+        Returns: {
+          email: string
+          id: string
+          jurusan_id: string
+          jurusan_nama: string
+          nama: string
+          nip: string
+          username: string
+        }[]
+      }
       authenticate_user: {
         Args: { input_password: string; input_username: string }
         Returns: {
@@ -811,7 +829,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "kaprog" | "kepala_sekolah"
+      app_role: "admin" | "kaprog" | "kepala_sekolah" | "guru_pembimbing"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -939,7 +957,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "kaprog", "kepala_sekolah"],
+      app_role: ["admin", "kaprog", "kepala_sekolah", "guru_pembimbing"],
     },
   },
 } as const

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, Key } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
@@ -29,6 +29,7 @@ interface GuruPembimbing {
   email: string | null;
   telepon: string | null;
   jurusan_id: string | null;
+  username: string | null;
   jurusan?: { nama: string } | null;
 }
 
@@ -37,6 +38,8 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
   const [jurusanList, setJurusanList] = useState<Jurusan[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [credentialDialogOpen, setCredentialDialogOpen] = useState(false);
+  const [selectedGuru, setSelectedGuru] = useState<GuruPembimbing | null>(null);
   const [editingGuru, setEditingGuru] = useState<GuruPembimbing | null>(null);
   const [formData, setFormData] = useState({
     nama: '',
@@ -44,6 +47,11 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
     email: '',
     telepon: '',
     jurusan_id: ''
+  });
+  const [credentialForm, setCredentialForm] = useState({
+    username: '',
+    password: '',
+    confirmPassword: ''
   });
   const { toast } = useToast();
 
@@ -152,6 +160,65 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
     }
   };
 
+  const handleSetCredential = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedGuru) return;
+    
+    if (credentialForm.password !== credentialForm.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Password tidak cocok",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (credentialForm.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password minimal 6 karakter",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Hash password using database function
+      const { data: hashedPassword, error: hashError } = await supabase
+        .rpc('hash_password', { password: credentialForm.password });
+
+      if (hashError) throw hashError;
+
+      // Update guru pembimbing with username and password
+      const { error } = await supabase
+        .from('guru_pembimbing')
+        .update({
+          username: credentialForm.username,
+          password: hashedPassword
+        })
+        .eq('id', selectedGuru.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Berhasil",
+        description: `Akun login untuk ${selectedGuru.nama} berhasil dibuat. Username: ${credentialForm.username}`
+      });
+
+      setCredentialDialogOpen(false);
+      setCredentialForm({ username: '', password: '', confirmPassword: '' });
+      setSelectedGuru(null);
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Gagal membuat akun login",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleEdit = (guru: GuruPembimbing) => {
     setEditingGuru(guru);
     setFormData({
@@ -162,6 +229,16 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
       jurusan_id: guru.jurusan_id || ''
     });
     setDialogOpen(true);
+  };
+
+  const handleOpenCredentialDialog = (guru: GuruPembimbing) => {
+    setSelectedGuru(guru);
+    setCredentialForm({
+      username: guru.username || guru.nip || '',
+      password: '',
+      confirmPassword: ''
+    });
+    setCredentialDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -305,6 +382,65 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
         )}
       </div>
 
+      {/* Credential Dialog */}
+      <Dialog open={credentialDialogOpen} onOpenChange={setCredentialDialogOpen}>
+        <DialogContent className="dialog-surface border-border/50">
+          <DialogHeader>
+            <DialogTitle>
+              Set Akun Login - {selectedGuru?.nama}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSetCredential} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="cred_username">Username *</Label>
+              <Input
+                id="cred_username"
+                value={credentialForm.username}
+                onChange={(e) => setCredentialForm(prev => ({ ...prev, username: e.target.value }))}
+                placeholder="Username untuk login"
+                className="bg-input/50 border-border/50"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cred_password">Password *</Label>
+              <Input
+                id="cred_password"
+                type="password"
+                value={credentialForm.password}
+                onChange={(e) => setCredentialForm(prev => ({ ...prev, password: e.target.value }))}
+                placeholder="Minimal 6 karakter"
+                className="bg-input/50 border-border/50"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cred_confirm">Konfirmasi Password *</Label>
+              <Input
+                id="cred_confirm"
+                type="password"
+                value={credentialForm.confirmPassword}
+                onChange={(e) => setCredentialForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                placeholder="Ulangi password"
+                className="bg-input/50 border-border/50"
+                required
+              />
+            </div>
+
+            <div className="flex gap-2 justify-end pt-4">
+              <Button type="button" variant="outline" onClick={() => setCredentialDialogOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" className="glow-effect">
+                Simpan Akun
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <Card className="card-gradient border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -328,6 +464,7 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
                     <TableHead>Email</TableHead>
                     <TableHead>Telepon</TableHead>
                     <TableHead>Jurusan</TableHead>
+                    <TableHead>Akun Login</TableHead>
                     {canEdit && <TableHead className="text-right">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -344,9 +481,26 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
                           <Badge variant="outline">{guru.jurusan.nama}</Badge>
                         ) : '-'}
                       </TableCell>
+                      <TableCell>
+                        {guru.username ? (
+                          <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
+                            {guru.username}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Belum ada</Badge>
+                        )}
+                      </TableCell>
                       {canEdit && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenCredentialDialog(guru)}
+                              title="Set Akun Login"
+                            >
+                              <Key className="h-4 w-4" />
+                            </Button>
                             <Button size="sm" variant="outline" onClick={() => handleEdit(guru)}>
                               <Edit className="h-4 w-4" />
                             </Button>
