@@ -25,6 +25,9 @@ const NilaiPrakerinContent = lazy(() => import('@/components/NilaiPrakerinConten
 const LaporanPrakerinContent = lazy(() => import('@/components/LaporanPrakerinContent'));
 const JadwalSidangContent = lazy(() => import('@/components/JadwalSidangContent'));
 
+// Guru Pembimbing Dashboard
+const GuruPembimbingDashboard = lazy(() => import('@/components/GuruPembimbingDashboard'));
+
 export type MenuType = 
   | 'dashboard' 
   | 'sekolah' 
@@ -58,6 +61,11 @@ const Dashboard = () => {
   }, [navigate]);
 
   const renderContent = () => {
+    // Special dashboard for guru_pembimbing
+    if (user?.role === 'guru_pembimbing') {
+      return <GuruPembimbingDashboard user={user} />;
+    }
+
     switch (activeMenu) {
       case 'dashboard':
         return <DashboardContent user={user} />;
@@ -91,6 +99,21 @@ const Dashboard = () => {
         return <DashboardContent user={user} />;
     }
   };
+
+  // Guru pembimbing gets a simplified interface
+  if (user?.role === 'guru_pembimbing') {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="overflow-auto">
+          <div className="p-4 md:p-6">
+            <Suspense fallback={<LoadingSpinner />}>
+              {renderContent()}
+            </Suspense>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const menuItems: MenuType[] = [
     'dashboard', 'sekolah', 'jurusan', 'kelas', 'siswa', 'prakerin', 
