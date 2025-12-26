@@ -45,16 +45,23 @@ interface Prakerin {
   tempat_prakerin: string | null;
 }
 
+interface Jurusan {
+  id: string;
+  nama: string;
+}
+
 const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
   const [nilaiList, setNilaiList] = useState<NilaiPrakerin[]>([]);
   const [itemPenilaianList, setItemPenilaianList] = useState<ItemPenilaian[]>([]);
   const [prakerinList, setPrakerinList] = useState<Prakerin[]>([]);
+  const [jurusanList, setJurusanList] = useState<Jurusan[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [editingNilai, setEditingNilai] = useState<NilaiPrakerin | null>(null);
   const [editingItem, setEditingItem] = useState<ItemPenilaian | null>(null);
   const [activeTab, setActiveTab] = useState('nilai');
+  const [filterJurusan, setFilterJurusan] = useState<string>('all');
   
   const [formData, setFormData] = useState({
     prakerin_id: '',
@@ -66,7 +73,8 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
   const [itemFormData, setItemFormData] = useState({
     nama: '',
     bobot: '1',
-    kategori: 'industri'
+    kategori: 'industri',
+    jurusan_id: ''
   });
 
   const { toast } = useToast();
@@ -83,12 +91,18 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
         userJurusanId = jurusanData?.id || null;
       }
 
+      // Load jurusan list for admin
+      const jurusanQuery = supabase
+        .from('jurusan')
+        .select('id, nama')
+        .order('nama');
+
       // Load nilai prakerin
       const nilaiQuery = supabase
         .from('nilai_prakerin')
         .select(`
           *,
-          item_penilaian(nama, kategori),
+          item_penilaian(nama, kategori, jurusan_id),
           prakerin(
             siswa(nama, nis),
             tempat_prakerin
@@ -96,10 +110,10 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
         `)
         .order('created_at', { ascending: false });
 
-      // Load item penilaian
+      // Load item penilaian - for admin show all or filter, for kaprog filter by jurusan
       let itemQuery = supabase
         .from('item_penilaian')
-        .select('*')
+        .select('*, jurusan(nama)')
         .order('nama');
 
       if (userJurusanId) {
@@ -120,19 +134,22 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
         prakerinQuery = prakerinQuery.eq('siswa.jurusan_id', userJurusanId);
       }
 
-      const [nilaiRes, itemRes, prakerinRes] = await Promise.all([
+      const [nilaiRes, itemRes, prakerinRes, jurusanRes] = await Promise.all([
         nilaiQuery,
         itemQuery,
-        prakerinQuery
+        prakerinQuery,
+        jurusanQuery
       ]);
 
       if (nilaiRes.error) throw nilaiRes.error;
       if (itemRes.error) throw itemRes.error;
       if (prakerinRes.error) throw prakerinRes.error;
+      if (jurusanRes.error) throw jurusanRes.error;
 
       setNilaiList(nilaiRes.data || []);
       setItemPenilaianList(itemRes.data || []);
       setPrakerinList(prakerinRes.data || []);
+      setJurusanList(jurusanRes.data || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -210,13 +227,27 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
 
     try {
       let jurusanId: string | null = null;
-      if (user?.role === 'kaprog') {
+      
+      // For admin, use selected jurusan_id from form
+      if (user?.role === 'admin') {
+        jurusanId = itemFormData.jurusan_id || null;
+      } else if (user?.role === 'kaprog') {
+        // For kaprog, get their jurusan
         const { data } = await supabase
           .from('jurusan')
           .select('id')
           .eq('nama', user.jurusan)
           .single();
         jurusanId = data?.id || null;
+      }
+
+      if (!jurusanId) {
+        toast({
+          title: "Error",
+          description: "Silakan pilih jurusan",
+          variant: "destructive"
+        });
+        return;
       }
 
       const data = {
@@ -279,7 +310,8 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
     setItemFormData({
       nama: item.nama,
       bobot: item.bobot.toString(),
-      kategori: item.kategori
+      kategori: item.kategori,
+      jurusan_id: item.jurusan_id || ''
     });
     setItemDialogOpen(true);
   };
@@ -326,9 +358,14 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
   };
 
   const resetItemForm = () => {
-    setItemFormData({ nama: '', bobot: '1', kategori: 'industri' });
+    setItemFormData({ nama: '', bobot: '1', kategori: 'industri', jurusan_id: '' });
     setEditingItem(null);
   };
+
+  // Filter item penilaian by jurusan for display
+  const filteredItemPenilaian = filterJurusan === 'all' 
+    ? itemPenilaianList 
+    : itemPenilaianList.filter(item => item.jurusan_id === filterJurusan);
 
   const getNilaiColor = (nilai: number) => {
     if (nilai >= 85) return 'bg-green-600';
@@ -526,7 +563,30 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
         </TabsContent>
 
         <TabsContent value="item" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            {/* Filter by Jurusan for admin */}
+            {user?.role === 'admin' && (
+              <div className="flex items-center gap-2">
+                <Label className="text-sm">Filter Jurusan:</Label>
+                <Select
+                  value={filterJurusan}
+                  onValueChange={setFilterJurusan}
+                >
+                  <SelectTrigger className="w-[200px] bg-input/50 border-border/50">
+                    <SelectValue placeholder="Semua Jurusan" />
+                  </SelectTrigger>
+                  <SelectContent className="card-gradient border-border/50">
+                    <SelectItem value="all">Semua Jurusan</SelectItem>
+                    {jurusanList.map((j) => (
+                      <SelectItem key={j.id} value={j.id}>
+                        {j.nama}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
             {canEdit && (
               <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
                 <DialogTrigger asChild>
@@ -542,6 +602,28 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
                     </DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmitItem} className="space-y-4">
+                    {/* Jurusan selector for admin */}
+                    {user?.role === 'admin' && (
+                      <div className="space-y-2">
+                        <Label>Jurusan *</Label>
+                        <Select
+                          value={itemFormData.jurusan_id}
+                          onValueChange={(value) => setItemFormData(prev => ({ ...prev, jurusan_id: value }))}
+                        >
+                          <SelectTrigger className="bg-input/50 border-border/50">
+                            <SelectValue placeholder="Pilih jurusan" />
+                          </SelectTrigger>
+                          <SelectContent className="card-gradient border-border/50">
+                            {jurusanList.map((j) => (
+                              <SelectItem key={j.id} value={j.id}>
+                                {j.nama}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label>Nama Item *</Label>
                       <Input
@@ -606,7 +688,7 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
             <CardContent>
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground">Memuat data...</div>
-              ) : itemPenilaianList.length === 0 ? (
+              ) : filteredItemPenilaian.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">Belum ada item penilaian</div>
               ) : (
                 <div className="overflow-x-auto">
@@ -616,17 +698,23 @@ const NilaiPrakerinContent = ({ user }: NilaiPrakerinContentProps) => {
                         <TableHead>No</TableHead>
                         <TableHead>Nama Item</TableHead>
                         <TableHead>Kategori</TableHead>
+                        <TableHead>Jurusan</TableHead>
                         <TableHead>Bobot</TableHead>
                         {canEdit && <TableHead className="text-right">Aksi</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {itemPenilaianList.map((item, index) => (
+                      {filteredItemPenilaian.map((item, index) => (
                         <TableRow key={item.id}>
                           <TableCell>{index + 1}</TableCell>
                           <TableCell className="font-medium">{item.nama}</TableCell>
                           <TableCell>
                             <Badge variant="outline">{item.kategori}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {(item as any).jurusan?.nama || '-'}
+                            </Badge>
                           </TableCell>
                           <TableCell>{item.bobot}</TableCell>
                           {canEdit && (

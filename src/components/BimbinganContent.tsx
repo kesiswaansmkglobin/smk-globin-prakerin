@@ -101,16 +101,15 @@ const BimbinganContent = ({ user }: BimbinganContentProps) => {
         `)
         .order('created_at', { ascending: false });
 
-      // Load guru pembimbing for dropdown
+      // Load guru pembimbing for dropdown - no filter since they're general
       let guruQuery = supabase
         .from('guru_pembimbing')
         .select('id, nama')
         .order('nama');
 
-      // Filter by jurusan if kaprog
+      // Filter prakerin by jurusan if kaprog
       if (user?.role === 'kaprog' && userJurusanId) {
         prakerinQuery = prakerinQuery.eq('siswa.jurusan_id', userJurusanId);
-        guruQuery = guruQuery.eq('jurusan_id', userJurusanId);
       }
 
       const [bimbinganRes, prakerinRes, guruRes] = await Promise.all([
