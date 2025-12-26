@@ -46,10 +46,16 @@ interface Siswa {
   nis: string;
 }
 
+interface Jurusan {
+  id: string;
+  nama: string;
+}
+
 const LaporanPrakerinContent = ({ user }: LaporanPrakerinContentProps) => {
   const [laporanList, setLaporanList] = useState<LaporanPrakerin[]>([]);
   const [pengumpulanList, setPengumpulanList] = useState<PengumpulanLaporan[]>([]);
   const [siswaList, setSiswaList] = useState<Siswa[]>([]);
+  const [jurusanList, setJurusanList] = useState<Jurusan[]>([]);
   const [loading, setLoading] = useState(true);
   const [laporanDialogOpen, setLaporanDialogOpen] = useState(false);
   const [pengumpulanDialogOpen, setPengumpulanDialogOpen] = useState(false);
@@ -61,7 +67,8 @@ const LaporanPrakerinContent = ({ user }: LaporanPrakerinContentProps) => {
   const [laporanFormData, setLaporanFormData] = useState({
     judul: '',
     deskripsi: '',
-    tenggat_waktu: ''
+    tenggat_waktu: '',
+    jurusan_id: ''
   });
 
   const [pengumpulanFormData, setPengumpulanFormData] = useState({
@@ -117,19 +124,28 @@ const LaporanPrakerinContent = ({ user }: LaporanPrakerinContentProps) => {
         siswaQuery = siswaQuery.eq('jurusan_id', userJurusanId);
       }
 
-      const [laporanRes, pengumpulanRes, siswaRes] = await Promise.all([
+      // Load jurusan list for admin
+      const jurusanQuery = supabase
+        .from('jurusan')
+        .select('id, nama')
+        .order('nama');
+
+      const [laporanRes, pengumpulanRes, siswaRes, jurusanRes] = await Promise.all([
         laporanQuery,
         pengumpulanQuery,
-        siswaQuery
+        siswaQuery,
+        jurusanQuery
       ]);
 
       if (laporanRes.error) throw laporanRes.error;
       if (pengumpulanRes.error) throw pengumpulanRes.error;
       if (siswaRes.error) throw siswaRes.error;
+      if (jurusanRes.error) throw jurusanRes.error;
 
       setLaporanList(laporanRes.data || []);
       setPengumpulanList(pengumpulanRes.data || []);
       setSiswaList(siswaRes.data || []);
+      setJurusanList(jurusanRes.data || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -159,15 +175,27 @@ const LaporanPrakerinContent = ({ user }: LaporanPrakerinContentProps) => {
 
     try {
       let jurusanId: string | null = null;
-      const { data: jurusanData } = await supabase
-        .from('jurusan')
-        .select('id')
-        .eq('nama', user.jurusan)
-        .single();
-      jurusanId = jurusanData?.id || null;
+      
+      // For admin, use selected jurusan_id from form
+      if (user?.role === 'admin') {
+        jurusanId = laporanFormData.jurusan_id || null;
+      } else {
+        // For kaprog, get their jurusan
+        const { data: jurusanData } = await supabase
+          .from('jurusan')
+          .select('id')
+          .eq('nama', user.jurusan)
+          .single();
+        jurusanId = jurusanData?.id || null;
+      }
 
-      if (!jurusanId && user?.role !== 'admin') {
-        throw new Error('Jurusan tidak ditemukan');
+      if (!jurusanId) {
+        toast({
+          title: "Error",
+          description: "Silakan pilih jurusan",
+          variant: "destructive"
+        });
+        return;
       }
 
       const data = {
@@ -269,7 +297,8 @@ const LaporanPrakerinContent = ({ user }: LaporanPrakerinContentProps) => {
     setLaporanFormData({
       judul: laporan.judul,
       deskripsi: laporan.deskripsi || '',
-      tenggat_waktu: laporan.tenggat_waktu.split('T')[0]
+      tenggat_waktu: laporan.tenggat_waktu.split('T')[0],
+      jurusan_id: laporan.jurusan_id || ''
     });
     setLaporanDialogOpen(true);
   };
@@ -324,7 +353,7 @@ const LaporanPrakerinContent = ({ user }: LaporanPrakerinContentProps) => {
   };
 
   const resetLaporanForm = () => {
-    setLaporanFormData({ judul: '', deskripsi: '', tenggat_waktu: '' });
+    setLaporanFormData({ judul: '', deskripsi: '', tenggat_waktu: '', jurusan_id: '' });
     setEditingLaporan(null);
   };
 
@@ -399,6 +428,28 @@ const LaporanPrakerinContent = ({ user }: LaporanPrakerinContentProps) => {
                     </DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmitLaporan} className="space-y-4">
+                    {/* Jurusan selector for admin */}
+                    {user?.role === 'admin' && (
+                      <div className="space-y-2">
+                        <Label>Jurusan *</Label>
+                        <Select
+                          value={laporanFormData.jurusan_id}
+                          onValueChange={(value) => setLaporanFormData(prev => ({ ...prev, jurusan_id: value }))}
+                        >
+                          <SelectTrigger className="bg-input/50 border-border/50">
+                            <SelectValue placeholder="Pilih jurusan" />
+                          </SelectTrigger>
+                          <SelectContent className="card-gradient border-border/50">
+                            {jurusanList.map((j) => (
+                              <SelectItem key={j.id} value={j.id}>
+                                {j.nama}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label>Judul Laporan *</Label>
                       <Input

@@ -61,12 +61,18 @@ interface GuruPembimbing {
   nama: string;
 }
 
+interface Jurusan {
+  id: string;
+  nama: string;
+}
+
 const JadwalSidangContent = ({ user }: JadwalSidangContentProps) => {
   const [jadwalList, setJadwalList] = useState<JadwalSidang[]>([]);
   const [pesertaList, setPesertaList] = useState<PesertaSidang[]>([]);
   const [pengujiList, setPengujiList] = useState<PengujiSidang[]>([]);
   const [siswaList, setSiswaList] = useState<Siswa[]>([]);
   const [guruList, setGuruList] = useState<GuruPembimbing[]>([]);
+  const [jurusanList, setJurusanList] = useState<Jurusan[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [jadwalDialogOpen, setJadwalDialogOpen] = useState(false);
@@ -84,7 +90,8 @@ const JadwalSidangContent = ({ user }: JadwalSidangContentProps) => {
     tanggal: '',
     waktu_mulai: '',
     waktu_selesai: '',
-    ruangan: ''
+    ruangan: '',
+    jurusan_id: ''
   });
 
   const [pesertaFormData, setPesertaFormData] = useState({
@@ -155,22 +162,25 @@ const JadwalSidangContent = ({ user }: JadwalSidangContentProps) => {
         siswaQuery = siswaQuery.eq('jurusan_id', userJurusanId);
       }
 
-      // Load guru for dropdown
+      // Load guru for dropdown - no filter since they're general
       let guruQuery = supabase
         .from('guru_pembimbing')
         .select('id, nama')
         .order('nama');
 
-      if (userJurusanId) {
-        guruQuery = guruQuery.eq('jurusan_id', userJurusanId);
-      }
+      // Load jurusan list for admin
+      const jurusanQuery = supabase
+        .from('jurusan')
+        .select('id, nama')
+        .order('nama');
 
-      const [jadwalRes, pesertaRes, pengujiRes, siswaRes, guruRes] = await Promise.all([
+      const [jadwalRes, pesertaRes, pengujiRes, siswaRes, guruRes, jurusanRes] = await Promise.all([
         jadwalQuery,
         pesertaQuery,
         pengujiQuery,
         siswaQuery,
-        guruQuery
+        guruQuery,
+        jurusanQuery
       ]);
 
       if (jadwalRes.error) throw jadwalRes.error;
@@ -178,12 +188,14 @@ const JadwalSidangContent = ({ user }: JadwalSidangContentProps) => {
       if (pengujiRes.error) throw pengujiRes.error;
       if (siswaRes.error) throw siswaRes.error;
       if (guruRes.error) throw guruRes.error;
+      if (jurusanRes.error) throw jurusanRes.error;
 
       setJadwalList(jadwalRes.data || []);
       setPesertaList(pesertaRes.data || []);
       setPengujiList(pengujiRes.data || []);
       setSiswaList(siswaRes.data || []);
       setGuruList(guruRes.data || []);
+      setJurusanList(jurusanRes.data || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -213,15 +225,21 @@ const JadwalSidangContent = ({ user }: JadwalSidangContentProps) => {
 
     try {
       let jurusanId: string | null = null;
-      const { data: jurusanData } = await supabase
-        .from('jurusan')
-        .select('id')
-        .eq('nama', user.jurusan)
-        .single();
-      jurusanId = jurusanData?.id || null;
+      
+      if (user?.role === 'admin') {
+        jurusanId = jadwalFormData.jurusan_id || null;
+      } else {
+        const { data: jurusanData } = await supabase
+          .from('jurusan')
+          .select('id')
+          .eq('nama', user.jurusan)
+          .single();
+        jurusanId = jurusanData?.id || null;
+      }
 
-      if (!jurusanId && user?.role !== 'admin') {
-        throw new Error('Jurusan tidak ditemukan');
+      if (!jurusanId) {
+        toast({ title: "Error", description: "Silakan pilih jurusan", variant: "destructive" });
+        return;
       }
 
       const data = {
@@ -343,7 +361,8 @@ const JadwalSidangContent = ({ user }: JadwalSidangContentProps) => {
       tanggal: jadwal.tanggal,
       waktu_mulai: jadwal.waktu_mulai,
       waktu_selesai: jadwal.waktu_selesai,
-      ruangan: jadwal.ruangan || ''
+      ruangan: jadwal.ruangan || '',
+      jurusan_id: jadwal.jurusan_id || ''
     });
     setJadwalDialogOpen(true);
   };
@@ -389,7 +408,7 @@ const JadwalSidangContent = ({ user }: JadwalSidangContentProps) => {
   };
 
   const resetJadwalForm = () => {
-    setJadwalFormData({ nama: '', tanggal: '', waktu_mulai: '', waktu_selesai: '', ruangan: '' });
+    setJadwalFormData({ nama: '', tanggal: '', waktu_mulai: '', waktu_selesai: '', ruangan: '', jurusan_id: '' });
     setEditingJadwal(null);
   };
 
@@ -467,6 +486,28 @@ const JadwalSidangContent = ({ user }: JadwalSidangContentProps) => {
                     </DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmitJadwal} className="space-y-4">
+                    {/* Jurusan selector for admin */}
+                    {user?.role === 'admin' && (
+                      <div className="space-y-2">
+                        <Label>Jurusan *</Label>
+                        <Select
+                          value={jadwalFormData.jurusan_id}
+                          onValueChange={(value) => setJadwalFormData(prev => ({ ...prev, jurusan_id: value }))}
+                        >
+                          <SelectTrigger className="bg-input/50 border-border/50">
+                            <SelectValue placeholder="Pilih jurusan" />
+                          </SelectTrigger>
+                          <SelectContent className="card-gradient border-border/50">
+                            {jurusanList.map((j) => (
+                              <SelectItem key={j.id} value={j.id}>
+                                {j.nama}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label>Nama Sidang *</Label>
                       <Input

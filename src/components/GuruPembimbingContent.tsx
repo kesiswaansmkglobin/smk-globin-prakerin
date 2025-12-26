@@ -57,6 +57,7 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
 
   const loadData = useCallback(async () => {
     try {
+      // Load all guru pembimbing - no filter by jurusan since they're general
       let guruQuery = supabase
         .from('guru_pembimbing')
         .select('*, jurusan(nama)')
@@ -66,19 +67,6 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
         .from('jurusan')
         .select('id, nama')
         .order('nama');
-
-      // Filter by jurusan if kaprog
-      if (user?.role === 'kaprog') {
-        const { data: jurusanData } = await supabase
-          .from('jurusan')
-          .select('id')
-          .eq('nama', user.jurusan)
-          .single();
-        
-        if (jurusanData) {
-          guruQuery = guruQuery.eq('jurusan_id', jurusanData.id);
-        }
-      }
 
       const [guruRes, jurusanRes] = await Promise.all([guruQuery, jurusanQuery]);
 
