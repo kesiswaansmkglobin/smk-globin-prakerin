@@ -31,18 +31,29 @@ const KelasContent = ({ user }: KelasContentProps) => {
   });
   const { toast } = useToast();
 
+  // Get user's jurusan_id for filtering
+  const userJurusanId = user?.jurusan_id;
+
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      // Build kelas query with jurusan filter for kaprog
+      let kelasQuery = supabase
+        .from('kelas')
+        .select('*, jurusan(nama)')
+        .order('created_at', { ascending: false });
+
+      // Filter by jurusan for kaprog
+      if (user?.role === 'kaprog' && userJurusanId) {
+        kelasQuery = kelasQuery.eq('jurusan_id', userJurusanId);
+      }
+
       const [kelasRes, jurusanRes] = await Promise.all([
-        supabase
-          .from('kelas')
-          .select('*, jurusan(nama)')
-          .order('created_at', { ascending: false }),
+        kelasQuery,
         supabase
           .from('jurusan')
           .select('*')
@@ -52,9 +63,6 @@ const KelasContent = ({ user }: KelasContentProps) => {
       if (kelasRes.error) throw kelasRes.error;
       if (jurusanRes.error) throw jurusanRes.error;
 
-      console.log('Kelas data loaded:', kelasRes.data?.length || 0);
-      console.log('Jurusan data loaded:', jurusanRes.data?.length || 0);
-      
       setKelas(kelasRes.data || []);
       setJurusan(jurusanRes.data || []);
     } catch (error) {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +21,8 @@ import {
   Trash2, 
   CheckCircle2,
   TrendingUp,
-  Briefcase
+  Briefcase,
+  LogOut
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -368,12 +370,29 @@ const GuruPembimbingDashboard = ({ user }: GuruPembimbingDashboardProps) => {
     return <div className="text-center py-8 text-muted-foreground">Memuat data...</div>;
   }
 
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    navigate('/');
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-primary">Dashboard Guru Pembimbing</h1>
-        <p className="text-muted-foreground">Selamat datang, {user?.name}</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-primary">Dashboard Guru Pembimbing</h1>
+          <p className="text-muted-foreground">Selamat datang, {user?.name}</p>
+        </div>
+        <Button 
+          variant="outline" 
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Keluar
+        </Button>
       </div>
 
       {/* Stats Cards */}
