@@ -7,8 +7,10 @@ export interface AuthUser {
   id: string;
   name: string;
   username: string;
-  role: 'admin' | 'kaprog';
+  role: 'admin' | 'kaprog' | 'guru_pembimbing';
   jurusan?: string;
+  jurusan_id?: string | null;
+  guru_pembimbing_id?: string | null;
 }
 
 export function useAuth() {
@@ -28,7 +30,7 @@ export function useAuth() {
       }
     } catch (error) {
       console.error('Error parsing user data:', error);
-      localStorage.removeItem('user'); // Clear corrupted data
+      localStorage.removeItem('user');
       setUser(null);
     } finally {
       setLoading(false);
@@ -38,81 +40,60 @@ export function useAuth() {
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      
-      // Try Supabase authentication first for admin users
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: username,
-        password: password,
-      });
 
-      if (error) {
-        // If Supabase auth fails, check for Kaprog accounts using secure edge function
-        const response = await fetch('https://xjnswzidbgxqdxuwpviy.supabase.co/functions/v1/authenticate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqbnN3emlkYmd4cWR4dXdwdml5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzQ2MTksImV4cCI6MjA3MjA1MDYxOX0.9AOmeU4GVDeXImXeBHXWVJTIESXwftBkSwo4esnhxFg'
-          },
-          body: JSON.stringify({
-            username: username,
-            password: password
-          })
+      const looksLikeEmail = username.includes('@');
+
+      // 1) Try Supabase Auth first (admin email login)
+      if (looksLikeEmail) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: username,
+          password,
         });
 
-        if (!response.ok) {
-          throw new Error('Username atau password salah');
-        }
+        if (!error && data.user) {
+          const userProfile: AuthUser = {
+            id: data.user.id,
+            name: data.user.user_metadata?.name || 'Administrator',
+            role: 'admin',
+            username: data.user.email || username,
+          };
 
-        const result = await response.json();
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Username atau password salah');
+          localStorage.setItem('user', JSON.stringify(userProfile));
+          setUser(userProfile);
+          return true;
         }
-
-        // If we got a session from the edge function, use it
-        if (result.session?.properties?.access_token) {
-          const { error: setSessionError } = await supabase.auth.setSession({
-            access_token: result.session.properties.access_token,
-            refresh_token: result.session.properties.refresh_token,
-          });
-          
-          if (setSessionError) {
-            console.error('Failed to set session:', setSessionError);
-          }
-        }
-
-        // Store Kaprog user data
-        const userData: AuthUser = {
-          ...result.user,
-          role: result.user.role as 'admin' | 'kaprog'
-        };
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-        return true;
       }
 
-      // Handle successful Supabase auth (admin user)
-      if (data.user) {
-        const userProfile = {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.user_metadata?.name || 'Administrator',
-          role: 'admin' as const,
-          username: data.user.email,
-        };
-        
-        localStorage.setItem('user', JSON.stringify(userProfile));
-        setUser(userProfile);
-        return true;
+      // 2) Fallback to custom auth via Edge Function (kaprog / guru_pembimbing)
+      const { data: result, error: fnError } = await supabase.functions.invoke('authenticate', {
+        body: { username, password },
+      });
+
+      if (fnError || !result?.success) {
+        throw new Error(result?.error || 'Username atau password salah');
       }
 
-      return false;
+      if (result.session?.access_token && result.session?.refresh_token) {
+        const { error: setSessionError } = await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        });
+
+        if (setSessionError) {
+          console.error('Failed to set session:', setSessionError);
+        }
+      }
+
+      const userData: AuthUser = result.user;
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      return true;
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
-        title: "Error Login",
+        title: 'Error Login',
         description: error.message || 'Terjadi kesalahan saat login',
-        variant: "destructive"
+        variant: 'destructive',
       });
       return false;
     } finally {
@@ -122,16 +103,12 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     try {
-      // Sign out from Supabase for both admin and kaprog (they both have sessions now)
       await supabase.auth.signOut();
-      
-      // Clear local storage
       localStorage.removeItem('user');
       setUser(null);
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
-      // Still clear local data even if Supabase signout fails
       localStorage.removeItem('user');
       setUser(null);
       navigate('/');
@@ -157,6 +134,7 @@ export function useAuth() {
     logout,
     checkAuth,
     isAdmin: user?.role === 'admin',
-    isKaprog: user?.role === 'kaprog'
+    isKaprog: user?.role === 'kaprog',
+    isGuruPembimbing: user?.role === 'guru_pembimbing',
   };
 }

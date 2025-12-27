@@ -168,67 +168,68 @@ serve(async (req) => {
       )
     }
 
-    // Authentication successful - clear failed attempts
-    clearFailedAttempts(clientIP)
-    
     // Create or get Supabase Auth session for this user
-    const authEmail = userType === 'guru_pembimbing' 
+    const authEmail = userType === 'guru_pembimbing'
       ? `guru_${userData.username}@internal.smkglobin.local`
       : `${userData.username}@internal.smkglobin.local`
-    
-    // Check if auth user exists using listUsers
+
+    // Ensure an Auth user exists for this identity (password = input password)
     const { data: listData } = await supabase.auth.admin.listUsers()
     const existingUser = listData?.users?.find(u => u.email === authEmail)
-    
+
     let authUserId = existingUser?.id || null
-    
+
     if (!existingUser) {
-      // Create auth user with random password (they'll use custom login)
-      const randomPassword = crypto.randomUUID()
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: authEmail,
-        password: randomPassword,
+        password,
         email_confirm: true,
         user_metadata: {
           custom_user_id: userData.id,
           name: userData.name,
           role: userData.role,
           jurusan: userData.jurusan,
-          user_type: userType
-        }
+          user_type: userType,
+        },
       })
-      
+
       if (createError) {
         console.error('Error creating auth user:', createError)
       } else {
         authUserId = newUser?.user?.id || null
       }
-    }
-    
-    // Generate auth session for the user
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: authEmail,
-    })
-    
-    if (sessionError) {
-      console.error('Session generation error:', sessionError)
+    } else {
+      // Keep auth password synced with custom password so sign-in works reliably
+      const { error: updateAuthError } = await supabase.auth.admin.updateUserById(existingUser.id, {
+        password,
+        user_metadata: {
+          custom_user_id: userData.id,
+          name: userData.name,
+          role: userData.role,
+          jurusan: userData.jurusan,
+          user_type: userType,
+        },
+      })
+
+      if (updateAuthError) {
+        console.error('Error updating auth user:', updateAuthError)
+      }
     }
 
     // Create role entry in user_roles table for secure role management
     if (authUserId) {
       const roleToInsert = userType === 'guru_pembimbing' ? 'guru_pembimbing' : userData.role
-      
+
       const { error: roleError } = await supabase
         .from('user_roles')
         .upsert({
           user_id: authUserId,
           role: roleToInsert,
-          jurusan: userData.jurusan
+          jurusan: userData.jurusan,
         }, {
-          onConflict: 'user_id,role'
+          onConflict: 'user_id,role',
         })
-      
+
       if (roleError) {
         console.error('Error creating role entry:', roleError)
       }
@@ -239,17 +240,39 @@ serve(async (req) => {
           .from('guru_pembimbing')
           .update({ user_id: authUserId })
           .eq('id', userData.guru_pembimbing_id)
-        
+
         if (updateError) {
           console.error('Error updating guru_pembimbing user_id:', updateError)
         }
       }
     }
 
+    // Sign in via anon client to get a real session (access_token + refresh_token)
+    const supabaseAnon = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    )
+
+    const { data: signInData, error: signInError } = await supabaseAnon.auth.signInWithPassword({
+      email: authEmail,
+      password,
+    })
+
+    if (signInError || !signInData?.session) {
+      console.error('Auth sign-in error:', signInError)
+      return new Response(
+        JSON.stringify({ error: 'Gagal membuat sesi login. Silakan coba lagi.' }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     // Return user data with session token
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         user: {
           id: userData.id,
           name: userData.name,
@@ -259,9 +282,9 @@ serve(async (req) => {
           jurusan_id: userData.jurusan_id,
           guru_pembimbing_id: userData.guru_pembimbing_id,
           nip: userData.nip,
-          email: userData.email
+          email: userData.email,
         },
-        session: sessionData
+        session: signInData.session,
       }),
       {
         status: 200,

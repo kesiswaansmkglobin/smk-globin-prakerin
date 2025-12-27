@@ -6,86 +6,41 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LogIn, School } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     username: '',
-    password: ''
+    password: '',
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    setSubmitting(true);
 
     try {
-      // Try Supabase authentication first
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.username,
-        password: formData.password,
-      });
-
-      if (error) {
-        // If Supabase auth fails, check for Kaprog accounts using secure edge function  
-        const response = await fetch('https://xjnswzidbgxqdxuwpviy.supabase.co/functions/v1/authenticate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqbnN3emlkYmd4cWR4dXdwdml5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NzQ2MTksImV4cCI6MjA3MjA1MDYxOX0.9AOmeU4GVDeXImXeBHXWVJTIESXwftBkSwo4esnhxFg'
-          },
-          body: JSON.stringify({
-            username: formData.username,
-            password: formData.password
-          })
-        });
-
-        if (!response.ok) {
-          setError('Username atau password salah');
-          return;
-        }
-
-        const result = await response.json();
-        
-        if (!result.success) {
-          setError(result.error || 'Username atau password salah');
-          return;
-        }
-
-        // Store Kaprog user data in localStorage
-        localStorage.setItem('user', JSON.stringify(result.user));
-        navigate('/dashboard');
+      const ok = await login(formData.username, formData.password);
+      if (!ok) {
+        setError('Username atau password salah');
         return;
       }
-
-      // Handle successful Supabase auth (admin user)
-      if (data.user) {
-        const userProfile = {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.user_metadata?.name || 'Administrator',
-          role: data.user.user_metadata?.role || 'admin',
-          username: data.user.email,
-        };
-        
-        localStorage.setItem('user', JSON.stringify(userProfile));
-        navigate('/dashboard');
-      }
-
-    } catch (err) {
+      navigate('/dashboard');
+    } catch {
       setError('Terjadi kesalahan saat login');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
@@ -94,7 +49,7 @@ const Login = () => {
       {/* Animated background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5" />
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzIyZDNlZSIgc3Ryb2tlLW9wYWNpdHk9IjAuMDUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-40" />
-      
+
       <Card className="w-full max-w-md p-8 card-gradient border border-border/50 relative z-10 fade-in">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
@@ -102,27 +57,24 @@ const Login = () => {
               <School className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-primary mb-2">
-            SIM Prakerin
-          </h1>
+          <h1 className="text-2xl font-bold text-primary mb-2">SIM Prakerin</h1>
           <p className="text-muted-foreground">SMK GLOBIN</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Sistem Informasi Manajemen Prakerin
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Sistem Informasi Manajemen Prakerin</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="username">Username (Email)</Label>
+            <Label htmlFor="username">Username / Email</Label>
             <Input
               id="username"
               name="username"
-              type="email"
+              type="text"
               value={formData.username}
               onChange={handleChange}
-              placeholder="Masukkan username"
+              placeholder="Masukkan username atau email"
               required
               className="bg-input/50 border-border/50 input-enhanced"
+              autoComplete="username"
             />
           </div>
 
@@ -137,27 +89,21 @@ const Login = () => {
               placeholder="Masukkan password"
               required
               className="bg-input/50 border-border/50 input-enhanced"
+              autoComplete="current-password"
             />
           </div>
 
           {error && (
             <Alert className="border-destructive/50 bg-destructive/10">
-              <AlertDescription className="text-destructive">
-                {error}
-              </AlertDescription>
+              <AlertDescription className="text-destructive">{error}</AlertDescription>
             </Alert>
           )}
 
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" disabled={submitting}>
             <LogIn className="mr-2 h-4 w-4" />
-            {loading ? 'Masuk...' : 'Masuk'}
+            {submitting ? 'Masuk...' : 'Masuk'}
           </Button>
         </form>
-
       </Card>
     </div>
   );
