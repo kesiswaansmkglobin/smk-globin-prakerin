@@ -803,6 +803,10 @@ export type Database = {
           role: string
         }[]
       }
+      guru_can_access_siswa: {
+        Args: { p_siswa_id: string; p_user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
