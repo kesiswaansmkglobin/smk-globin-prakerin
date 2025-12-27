@@ -134,16 +134,16 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
         .select('id, nis, nama, jurusan_id, kelas(nama), jurusan(nama)')
         .order('nama');
 
-      let guruQuery = supabase
+      // Guru pembimbing is general - no jurusan filter
+      const guruQuery = supabase
         .from('guru_pembimbing')
         .select('id, nama, nip, jurusan_id, jurusan(nama)')
         .order('nama');
 
-      // Filter by user's jurusan if kaprog
+      // Filter kelas and siswa by user's jurusan if kaprog
       if (user?.role === 'kaprog' && userJurusanId) {
         kelasQuery = kelasQuery.eq('jurusan_id', userJurusanId);
         siswaQuery = siswaQuery.eq('jurusan_id', userJurusanId);
-        guruQuery = guruQuery.eq('jurusan_id', userJurusanId);
       }
 
       const [prakerinRes, kelasRes, siswaRes, guruRes] = await Promise.all([

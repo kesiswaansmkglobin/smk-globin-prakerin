@@ -51,6 +51,33 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
+  const menuItems: MenuType[] = [
+    'dashboard', 'sekolah', 'jurusan', 'kelas', 'siswa', 'prakerin', 
+    'guru_pembimbing', 'bimbingan', 'nilai', 'laporan_prakerin', 'jadwal_sidang',
+    'laporan', 'pengguna', 'pengaturan'
+  ];
+
+  const handlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (isMobile) {
+        const currentIndex = menuItems.indexOf(activeMenu);
+        if (currentIndex < menuItems.length - 1) {
+          setActiveMenu(menuItems[currentIndex + 1]);
+        }
+      }
+    },
+    onSwipedRight: () => {
+      if (isMobile) {
+        const currentIndex = menuItems.indexOf(activeMenu);
+        if (currentIndex > 0) {
+          setActiveMenu(menuItems[currentIndex - 1]);
+        }
+      }
+    },
+    trackMouse: false,
+    trackTouch: true,
+  });
+
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (!userData) {
@@ -100,8 +127,12 @@ const Dashboard = () => {
     }
   };
 
-  // Guru pembimbing gets a simplified interface
-  if (user?.role === 'guru_pembimbing') {
+  if (!user) {
+    return null;
+  }
+
+  // Guru pembimbing gets a simplified interface (no sidebar/bottom nav)
+  if (user.role === 'guru_pembimbing') {
     return (
       <div className="min-h-screen bg-background">
         <main className="overflow-auto">
@@ -113,37 +144,6 @@ const Dashboard = () => {
         </main>
       </div>
     );
-  }
-
-  const menuItems: MenuType[] = [
-    'dashboard', 'sekolah', 'jurusan', 'kelas', 'siswa', 'prakerin', 
-    'guru_pembimbing', 'bimbingan', 'nilai', 'laporan_prakerin', 'jadwal_sidang',
-    'laporan', 'pengguna', 'pengaturan'
-  ];
-  
-  const handlers = useSwipeable({
-    onSwipedLeft: () => {
-      if (isMobile) {
-        const currentIndex = menuItems.indexOf(activeMenu);
-        if (currentIndex < menuItems.length - 1) {
-          setActiveMenu(menuItems[currentIndex + 1]);
-        }
-      }
-    },
-    onSwipedRight: () => {
-      if (isMobile) {
-        const currentIndex = menuItems.indexOf(activeMenu);
-        if (currentIndex > 0) {
-          setActiveMenu(menuItems[currentIndex - 1]);
-        }
-      }
-    },
-    trackMouse: false,
-    trackTouch: true,
-  });
-
-  if (!user) {
-    return null;
   }
 
   return (
