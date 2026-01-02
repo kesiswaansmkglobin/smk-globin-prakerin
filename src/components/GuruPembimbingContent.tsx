@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -12,14 +11,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import { canEditGuruPembimbing } from '@/utils/permissions';
+import TableSearch from '@/components/common/TableSearch';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface GuruPembimbingContentProps {
   user: any;
-}
-
-interface Jurusan {
-  id: string;
-  nama: string;
 }
 
 interface GuruPembimbing {
@@ -35,18 +31,19 @@ interface GuruPembimbing {
 
 const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
   const [guruList, setGuruList] = useState<GuruPembimbing[]>([]);
-  const [jurusanList, setJurusanList] = useState<Jurusan[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [credentialDialogOpen, setCredentialDialogOpen] = useState(false);
   const [selectedGuru, setSelectedGuru] = useState<GuruPembimbing | null>(null);
   const [editingGuru, setEditingGuru] = useState<GuruPembimbing | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  
   const [formData, setFormData] = useState({
     nama: '',
     nip: '',
     email: '',
-    telepon: '',
-    jurusan_id: ''
+    telepon: ''
   });
   const [credentialForm, setCredentialForm] = useState({
     username: '',
@@ -57,24 +54,16 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
 
   const loadData = useCallback(async () => {
     try {
-      // Load all guru pembimbing - no filter by jurusan since they're general
-      let guruQuery = supabase
+      const guruQuery = supabase
         .from('guru_pembimbing')
-        .select('*, jurusan(nama)')
+        .select('*')
         .order('nama');
 
-      const jurusanQuery = supabase
-        .from('jurusan')
-        .select('id, nama')
-        .order('nama');
-
-      const [guruRes, jurusanRes] = await Promise.all([guruQuery, jurusanQuery]);
+      const guruRes = await guruQuery;
 
       if (guruRes.error) throw guruRes.error;
-      if (jurusanRes.error) throw jurusanRes.error;
 
       setGuruList(guruRes.data || []);
-      setJurusanList(jurusanRes.data || []);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -84,11 +73,23 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
     } finally {
       setLoading(false);
     }
-  }, [user, toast]);
+  }, [toast]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Filtered data based on search
+  const filteredGuruList = useMemo(() => {
+    if (!debouncedSearch) return guruList;
+    
+    const query = debouncedSearch.toLowerCase();
+    return guruList.filter(guru => 
+      guru.nama.toLowerCase().includes(query) ||
+      (guru.nip && guru.nip.toLowerCase().includes(query)) ||
+      (guru.email && guru.email.toLowerCase().includes(query))
+    );
+  }, [guruList, debouncedSearch]);
 
   // Realtime subscription
   useRealtimeSubscription({
@@ -107,8 +108,7 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
         nama: formData.nama,
         nip: formData.nip || null,
         email: formData.email || null,
-        telepon: formData.telepon || null,
-        jurusan_id: formData.jurusan_id || null
+        telepon: formData.telepon || null
       };
 
       if (editingGuru) {
@@ -213,8 +213,7 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
       nama: guru.nama,
       nip: guru.nip || '',
       email: guru.email || '',
-      telepon: guru.telepon || '',
-      jurusan_id: guru.jurusan_id || ''
+      telepon: guru.telepon || ''
     });
     setDialogOpen(true);
   };
@@ -260,8 +259,7 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
       nama: '',
       nip: '',
       email: '',
-      telepon: '',
-      jurusan_id: ''
+      telepon: ''
     });
     setEditingGuru(null);
   };
@@ -335,25 +333,6 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
                     placeholder="08xxxxxxxxxx"
                     className="bg-input/50 border-border/50"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="jurusan">Jurusan</Label>
-                  <Select
-                    value={formData.jurusan_id}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, jurusan_id: value }))}
-                  >
-                    <SelectTrigger className="bg-input/50 border-border/50">
-                      <SelectValue placeholder="Pilih jurusan" />
-                    </SelectTrigger>
-                    <SelectContent className="card-gradient border-border/50">
-                      {jurusanList.map((jurusan) => (
-                        <SelectItem key={jurusan.id} value={jurusan.id}>
-                          {jurusan.nama}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 <div className="flex gap-2 justify-end pt-4">
@@ -437,38 +416,45 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <TableSearch
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Cari nama, NIP, atau email..."
+          />
+          
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">Memuat data...</div>
-          ) : guruList.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Belum ada data guru pembimbing</div>
+          ) : filteredGuruList.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {searchQuery ? 'Tidak ada hasil pencarian' : 'Belum ada data guru pembimbing'}
+            </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>No</TableHead>
+                    <TableHead className="hidden sm:table-cell">No</TableHead>
                     <TableHead>Nama</TableHead>
-                    <TableHead>NIP</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telepon</TableHead>
-                    <TableHead>Jurusan</TableHead>
+                    <TableHead className="hidden md:table-cell">NIP</TableHead>
+                    <TableHead className="hidden lg:table-cell">Email</TableHead>
+                    <TableHead className="hidden lg:table-cell">Telepon</TableHead>
                     <TableHead>Akun Login</TableHead>
                     {canEdit && <TableHead className="text-right">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {guruList.map((guru, index) => (
+                  {filteredGuruList.map((guru, index) => (
                     <TableRow key={guru.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell className="font-medium">{guru.nama}</TableCell>
-                      <TableCell>{guru.nip || '-'}</TableCell>
-                      <TableCell>{guru.email || '-'}</TableCell>
-                      <TableCell>{guru.telepon || '-'}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{index + 1}</TableCell>
                       <TableCell>
-                        {guru.jurusan?.nama ? (
-                          <Badge variant="outline">{guru.jurusan.nama}</Badge>
-                        ) : '-'}
+                        <div>
+                          <div className="font-medium">{guru.nama}</div>
+                          <div className="text-xs text-muted-foreground md:hidden">{guru.nip || '-'}</div>
+                        </div>
                       </TableCell>
+                      <TableCell className="hidden md:table-cell">{guru.nip || '-'}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{guru.email || '-'}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{guru.telepon || '-'}</TableCell>
                       <TableCell>
                         {guru.username ? (
                           <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
@@ -480,22 +466,23 @@ const GuruPembimbingContent = ({ user }: GuruPembimbingContentProps) => {
                       </TableCell>
                       {canEdit && (
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end gap-1 sm:gap-2">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleOpenCredentialDialog(guru)}
                               title="Set Akun Login"
+                              className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
                             >
                               <Key className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleEdit(guru)}>
+                            <Button size="sm" variant="outline" onClick={() => handleEdit(guru)} className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3">
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                              className="border-destructive/50 text-destructive hover:bg-destructive/10 h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
                               onClick={() => handleDelete(guru.id)}
                             >
                               <Trash2 className="h-4 w-4" />
