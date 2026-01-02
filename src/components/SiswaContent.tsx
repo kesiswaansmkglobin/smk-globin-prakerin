@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { Plus, Edit, Trash2, UserCircle, Upload, ArrowUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ImportSiswaDialog } from '@/components/ImportSiswaDialog';
+import TableSearch from '@/components/common/TableSearch';
+import { useDebounce } from '@/hooks/useDebounce';
 
 import { canEditSiswa, shouldFilterByJurusan, getFilteredJurusan } from '@/utils/permissions';
 
@@ -29,6 +31,13 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [editingSiswa, setEditingSiswa] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterKelas, setFilterKelas] = useState('all');
+  const [filterJurusan, setFilterJurusan] = useState('all');
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  
   const [formData, setFormData] = useState({
     nis: '',
     nama: '',
@@ -89,16 +98,6 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
       setSiswa(siswaRes.data || []);
       setKelas(kelasRes.data || []);
       setJurusan(jurusanRes.data || []);
-      
-      // Filter siswa untuk kaprog berdasarkan jurusan
-      if (shouldFilterByJurusan(user)) {
-        const filteredData = (siswaRes.data || []).filter((s: any) => 
-          s.jurusan?.nama === user.jurusan
-        );
-        setFilteredSiswa(filteredData);
-      } else {
-        setFilteredSiswa(siswaRes.data || []);
-      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -106,15 +105,44 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
         description: error.message || "Tidak dapat memuat data",
         variant: "destructive",
       });
-      // Set empty arrays to prevent rendering issues
       setSiswa([]);
-      setFilteredSiswa([]);
       setKelas([]);
       setJurusan([]);
     } finally {
       setLoading(false);
     }
   };
+
+  // Memoized filtered data based on search and filters
+  const displayedSiswa = useMemo(() => {
+    let data = siswa;
+    
+    // Filter by user's jurusan for kaprog
+    if (shouldFilterByJurusan(user)) {
+      data = data.filter((s: any) => s.jurusan?.nama === user.jurusan);
+    }
+    
+    // Apply search filter
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
+      data = data.filter((s: any) => 
+        s.nama.toLowerCase().includes(query) ||
+        s.nis.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply kelas filter
+    if (filterKelas && filterKelas !== 'all') {
+      data = data.filter((s: any) => s.kelas?.nama === filterKelas);
+    }
+    
+    // Apply jurusan filter
+    if (filterJurusan && filterJurusan !== 'all') {
+      data = data.filter((s: any) => s.jurusan?.nama === filterJurusan);
+    }
+    
+    return data;
+  }, [siswa, debouncedSearch, filterKelas, filterJurusan, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,31 +258,35 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
   };
 
   return (
-    <div className="space-y-6 relative">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6 relative">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-primary">Data Siswa</h1>
-          <p className="text-muted-foreground">Kelola data siswa sekolah</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Data Siswa</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Kelola data siswa sekolah</p>
         </div>
 
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           {canEdit && (
             <>
               <Button 
                 variant="outline" 
                 onClick={() => setImportDialogOpen(true)}
+                size="sm"
+                className="sm:size-default"
               >
                 <Upload className="mr-2 h-4 w-4" />
-                Impor CSV
+                <span className="hidden sm:inline">Impor CSV</span>
+                <span className="sm:hidden">Impor</span>
               </Button>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="glow-effect" onClick={resetForm}>
+                  <Button className="glow-effect" onClick={resetForm} size="sm">
                     <Plus className="mr-2 h-4 w-4" />
-                    Tambah Siswa
+                    <span className="hidden sm:inline">Tambah Siswa</span>
+                    <span className="sm:hidden">Tambah</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="dialog-surface border-border/50 max-w-2xl overflow-hidden">
+                <DialogContent className="dialog-surface border-border/50 max-w-2xl overflow-hidden max-h-[90vh]">
                   <DialogHeader>
                     <DialogTitle>
                       {editingSiswa ? 'Edit Siswa' : 'Tambah Siswa Baru'}
@@ -362,53 +394,83 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
       </div>
 
       <Card className="card-gradient border-border/50">
-        <CardHeader>
-          <CardTitle className="flex items-center">
+        <CardHeader className="pb-2 sm:pb-4">
+          <CardTitle className="flex items-center text-lg sm:text-xl">
             <UserCircle className="mr-2 h-5 w-5 text-primary" />
             Daftar Siswa
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <TableSearch
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Cari nama atau NIS..."
+            filters={[
+              {
+                value: filterKelas,
+                onChange: setFilterKelas,
+                options: kelas.map((k: any) => ({ value: k.nama, label: k.nama })),
+                placeholder: 'Semua Kelas'
+              },
+              ...(!shouldFilterByJurusan(user) ? [{
+                value: filterJurusan,
+                onChange: setFilterJurusan,
+                options: jurusan.map((j: any) => ({ value: j.nama, label: j.nama })),
+                placeholder: 'Semua Jurusan'
+              }] : [])
+            ]}
+          />
+          
           {loading ? (
             <div className="text-center py-8 text-muted-foreground">
               Memuat data...
             </div>
-          ) : filteredSiswa.length === 0 ? (
+          ) : displayedSiswa.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              {user?.role === 'kaprog' 
-                ? `Belum ada data siswa jurusan ${user.jurusan}` 
-                : 'Belum ada data siswa'}
+              {searchQuery || filterKelas !== 'all' || filterJurusan !== 'all' 
+                ? 'Tidak ada hasil pencarian' 
+                : user?.role === 'kaprog' 
+                  ? `Belum ada data siswa jurusan ${user.jurusan}` 
+                  : 'Belum ada data siswa'}
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>No</TableHead>
+                    <TableHead className="hidden sm:table-cell">No</TableHead>
                     <TableHead>NIS</TableHead>
                     <TableHead>Nama</TableHead>
-                    <TableHead>Kelas</TableHead>
-                    <TableHead>Jurusan</TableHead>
-                    <TableHead>Jenis Kelamin</TableHead>
+                    <TableHead className="hidden md:table-cell">Kelas</TableHead>
+                    <TableHead className="hidden lg:table-cell">Jurusan</TableHead>
+                    <TableHead className="hidden lg:table-cell">JK</TableHead>
                     {canEdit && <TableHead className="text-right">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredSiswa.map((item: any, index) => (
+                  {displayedSiswa.map((item: any, index) => (
                     <TableRow key={item.id}>
-                      <TableCell>{index + 1}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{index + 1}</TableCell>
                       <TableCell className="font-medium">{item.nis}</TableCell>
-                      <TableCell>{item.nama}</TableCell>
-                      <TableCell>{item.kelas?.nama || '-'}</TableCell>
-                      <TableCell>{item.jurusan?.nama || '-'}</TableCell>
-                      <TableCell>{item.jenis_kelamin === 'L' ? 'Laki-laki' : item.jenis_kelamin === 'P' ? 'Perempuan' : '-'}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div>{item.nama}</div>
+                          <div className="text-xs text-muted-foreground md:hidden">
+                            {item.kelas?.nama || '-'}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{item.kelas?.nama || '-'}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{item.jurusan?.nama || '-'}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{item.jenis_kelamin === 'L' ? 'L' : item.jenis_kelamin === 'P' ? 'P' : '-'}</TableCell>
                       {canEdit && (
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end gap-1 sm:gap-2">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleEdit(item)}
+                              className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -416,7 +478,7 @@ const SiswaContent = ({ user }: SiswaContentProps) => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleDelete(item.id)}
-                              className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                              className="border-destructive/50 text-destructive hover:bg-destructive/10 h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
