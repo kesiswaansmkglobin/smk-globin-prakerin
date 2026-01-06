@@ -65,9 +65,9 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
     // Skip admin-only items for non-admins
     if (item.adminOnly) return false;
     
-    // For kaprog, show relevant menus
+    // For kaprog, show relevant menus (exclude guru_pembimbing - managed by admin only)
     if (user?.role === 'kaprog') {
-      return ['dashboard', 'kelas', 'siswa', 'guru_pembimbing', 'prakerin', 'bimbingan', 'nilai', 'laporan_prakerin', 'jadwal_sidang', 'laporan'].includes(item.id);
+      return ['dashboard', 'kelas', 'siswa', 'prakerin', 'bimbingan', 'nilai', 'laporan_prakerin', 'jadwal_sidang', 'laporan'].includes(item.id);
     }
     
     // For kepala_sekolah, show all menus except admin-only
