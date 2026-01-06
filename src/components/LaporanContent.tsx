@@ -55,6 +55,10 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
             nama,
             kelas(nama, tingkat),
             jurusan(nama)
+          ),
+          guru_pembimbing(
+            nama,
+            nip
           )
         `)
         .order('created_at', { ascending: false });
@@ -180,7 +184,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
         label: 'Tanggal Selesai',
         formatter: formatDate
       },
-      { key: 'pembimbing_sekolah', label: 'Pembimbing Sekolah' },
+      { key: 'guru_pembimbing.nama', label: 'Pembimbing Sekolah' },
       { key: 'pembimbing_industri', label: 'Pembimbing Industri' },
       { key: 'nilai_akhir', label: 'Nilai Akhir' },
       { key: 'status', label: 'Status' },
@@ -451,7 +455,7 @@ const LaporanContent = ({ user }: LaporanContentProps) => {
                       <TableCell>
                         {formatDateRange(item.tanggal_mulai, item.tanggal_selesai)}
                       </TableCell>
-                      <TableCell>{item.pembimbing_sekolah || '-'}</TableCell>
+                      <TableCell>{item.guru_pembimbing?.nama || '-'}</TableCell>
                       <TableCell>{item.pembimbing_industri || '-'}</TableCell>
                       <TableCell>
                         {item.nilai_akhir ? (

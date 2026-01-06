@@ -169,9 +169,18 @@ serve(async (req) => {
     }
 
     // Create or get Supabase Auth session for this user
+    // Sanitize username for email format - remove invalid characters and spaces
+    const sanitizedUsername = userData.username
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_') // Replace non-alphanumeric with underscore
+      .replace(/_{2,}/g, '_')      // Replace multiple underscores with single
+      .replace(/^_|_$/g, '')       // Remove leading/trailing underscores
+    
     const authEmail = userType === 'guru_pembimbing'
-      ? `guru_${userData.username}@internal.smkglobin.local`
-      : `${userData.username}@internal.smkglobin.local`
+      ? `guru_${sanitizedUsername}@internal.smkglobin.local`
+      : `${sanitizedUsername}@internal.smkglobin.local`
+
+    console.log(`Creating/updating auth user for: ${authEmail}`)
 
     // Ensure an Auth user exists for this identity (password = input password)
     const { data: listData } = await supabase.auth.admin.listUsers()
@@ -180,6 +189,7 @@ serve(async (req) => {
     let authUserId = existingUser?.id || null
 
     if (!existingUser) {
+      console.log('Creating new auth user...')
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: authEmail,
         password,
@@ -195,10 +205,34 @@ serve(async (req) => {
 
       if (createError) {
         console.error('Error creating auth user:', createError)
+        // If email format is still invalid, try with a fallback
+        if (createError.message.includes('email')) {
+          const fallbackEmail = `user_${Date.now()}@internal.smkglobin.local`
+          console.log(`Retrying with fallback email: ${fallbackEmail}`)
+          const { data: fallbackUser, error: fallbackError } = await supabase.auth.admin.createUser({
+            email: fallbackEmail,
+            password,
+            email_confirm: true,
+            user_metadata: {
+              custom_user_id: userData.id,
+              name: userData.name,
+              role: userData.role,
+              jurusan: userData.jurusan,
+              user_type: userType,
+              original_username: userData.username,
+            },
+          })
+          if (fallbackError) {
+            console.error('Fallback also failed:', fallbackError)
+          } else {
+            authUserId = fallbackUser?.user?.id || null
+          }
+        }
       } else {
         authUserId = newUser?.user?.id || null
       }
     } else {
+      console.log('Updating existing auth user...')
       // Keep auth password synced with custom password so sign-in works reliably
       const { error: updateAuthError } = await supabase.auth.admin.updateUserById(existingUser.id, {
         password,
