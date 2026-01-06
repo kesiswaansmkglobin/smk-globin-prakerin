@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, Briefcase } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Plus, Edit, Trash2, Briefcase, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
@@ -48,8 +49,9 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPrakerin, setEditingPrakerin] = useState<any>(null);
   const [selectedKelas, setSelectedKelas] = useState('');
-  const [selectedSiswa, setSelectedSiswa] = useState('');
+  const [selectedSiswaIds, setSelectedSiswaIds] = useState<string[]>([]);
   const [filteredSiswa, setFilteredSiswa] = useState<SiswaData[]>([]);
+  const [isBatchMode, setIsBatchMode] = useState(false);
   const [formData, setFormData] = useState({
     siswa_id: '',
     tempat_prakerin: '',
@@ -84,7 +86,8 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
     } else {
       setFilteredSiswa([]);
     }
-    setSelectedSiswa('');
+    setSelectedSiswaIds([]);
+    setFormData(prev => ({ ...prev, siswa_id: '' }));
   }, [selectedKelas, siswaList]);
 
   const loadData = async () => {
@@ -173,14 +176,24 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
     }
   };
 
-  const handleSiswaSelect = (siswaId: string) => {
-    const selectedSiswaData = siswaList.find(s => s.id === siswaId);
-    if (selectedSiswaData) {
-      setSelectedSiswa(siswaId);
-      setFormData(prev => ({
-        ...prev,
-        siswa_id: siswaId
-      }));
+  const handleSiswaSelect = (siswaId: string, checked: boolean) => {
+    if (isBatchMode) {
+      setSelectedSiswaIds(prev => 
+        checked 
+          ? [...prev, siswaId] 
+          : prev.filter(id => id !== siswaId)
+      );
+    } else {
+      setSelectedSiswaIds(checked ? [siswaId] : []);
+      setFormData(prev => ({ ...prev, siswa_id: checked ? siswaId : '' }));
+    }
+  };
+
+  const handleSelectAllSiswa = (checked: boolean) => {
+    if (checked) {
+      setSelectedSiswaIds(filteredSiswa.map(s => s.id));
+    } else {
+      setSelectedSiswaIds([]);
     }
   };
 
@@ -188,41 +201,68 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
     e.preventDefault();
     
     try {
-      const data = {
-        siswa_id: formData.siswa_id,
-        tempat_prakerin: formData.tempat_prakerin,
-        alamat_prakerin: formData.alamat_prakerin,
-        tanggal_mulai: formData.tanggal_mulai,
-        tanggal_selesai: formData.tanggal_selesai,
-        guru_pembimbing_id: formData.guru_pembimbing_id || null,
-        pembimbing_industri: formData.pembimbing_industri,
-        status: formData.status,
-        keterangan: formData.keterangan
-      };
+      // For batch mode, insert multiple records
+      if (isBatchMode && selectedSiswaIds.length > 0) {
+        const dataToInsert = selectedSiswaIds.map(siswaId => ({
+          siswa_id: siswaId,
+          tempat_prakerin: formData.tempat_prakerin,
+          alamat_prakerin: formData.alamat_prakerin,
+          tanggal_mulai: formData.tanggal_mulai,
+          tanggal_selesai: formData.tanggal_selesai,
+          guru_pembimbing_id: formData.guru_pembimbing_id || null,
+          pembimbing_industri: formData.pembimbing_industri,
+          status: formData.status,
+          keterangan: formData.keterangan
+        }));
 
-      if (editingPrakerin) {
         const { error } = await supabase
           .from('prakerin')
-          .update(data)
-          .eq('id', editingPrakerin.id);
+          .insert(dataToInsert);
 
         if (error) throw error;
 
         toast({
           title: "Berhasil",
-          description: "Data prakerin berhasil diperbarui"
+          description: `${selectedSiswaIds.length} data prakerin berhasil ditambahkan`
         });
       } else {
-        const { error } = await supabase
-          .from('prakerin')
-          .insert([data]);
+        // Single mode - existing logic
+        const data = {
+          siswa_id: selectedSiswaIds[0] || formData.siswa_id,
+          tempat_prakerin: formData.tempat_prakerin,
+          alamat_prakerin: formData.alamat_prakerin,
+          tanggal_mulai: formData.tanggal_mulai,
+          tanggal_selesai: formData.tanggal_selesai,
+          guru_pembimbing_id: formData.guru_pembimbing_id || null,
+          pembimbing_industri: formData.pembimbing_industri,
+          status: formData.status,
+          keterangan: formData.keterangan
+        };
 
-        if (error) throw error;
+        if (editingPrakerin) {
+          const { error } = await supabase
+            .from('prakerin')
+            .update(data)
+            .eq('id', editingPrakerin.id);
 
-        toast({
-          title: "Berhasil",
-          description: "Data prakerin berhasil ditambahkan"
-        });
+          if (error) throw error;
+
+          toast({
+            title: "Berhasil",
+            description: "Data prakerin berhasil diperbarui"
+          });
+        } else {
+          const { error } = await supabase
+            .from('prakerin')
+            .insert([data]);
+
+          if (error) throw error;
+
+          toast({
+            title: "Berhasil",
+            description: "Data prakerin berhasil ditambahkan"
+          });
+        }
       }
 
       setDialogOpen(false);
@@ -239,13 +279,14 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
 
   const handleEdit = (item: any) => {
     setEditingPrakerin(item);
+    setIsBatchMode(false);
     
     // Find the siswa data
     const siswaData = siswaList.find(s => s.id === item.siswa_id);
     if (siswaData?.kelas?.nama) {
       setSelectedKelas(siswaData.kelas.nama);
     }
-    setSelectedSiswa(item.siswa_id);
+    setSelectedSiswaIds([item.siswa_id]);
     
     setFormData({
       siswa_id: item.siswa_id || '',
@@ -300,8 +341,9 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
       keterangan: ''
     });
     setSelectedKelas('');
-    setSelectedSiswa('');
+    setSelectedSiswaIds([]);
     setEditingPrakerin(null);
+    setIsBatchMode(false);
     setDialogOpen(false);
   };
 
@@ -312,8 +354,9 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
 
   const canEdit = canEditPrakerin(user);
 
-  const getSelectedSiswaData = () => {
-    return siswaList.find(s => s.id === selectedSiswa);
+  const getSelectedSiswaData = (id?: string) => {
+    const targetId = id || (selectedSiswaIds.length > 0 ? selectedSiswaIds[0] : undefined);
+    return siswaList.find(s => s.id === targetId);
   };
 
   const getStatusBadge = (status: string) => {
@@ -378,29 +421,87 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                     </Select>
                   </div>
 
-                  {/* Siswa Selection */}
-                  <div className="space-y-2">
-                    <Label htmlFor="siswa">Pilih Siswa</Label>
-                    <Select 
-                      value={selectedSiswa} 
-                      onValueChange={handleSiswaSelect}
-                      disabled={!selectedKelas}
-                    >
-                      <SelectTrigger className="bg-input/50 border-border/50">
-                        <SelectValue placeholder={selectedKelas ? "Pilih siswa" : "Pilih kelas terlebih dahulu"} />
-                      </SelectTrigger>
-                      <SelectContent className="card-gradient border-border/50">
-                        {filteredSiswa.map((siswa) => (
-                          <SelectItem key={siswa.id} value={siswa.id}>
-                            {siswa.nama} - {siswa.nis}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Batch Mode Toggle - only for new entries */}
+                  {!editingPrakerin && selectedKelas && (
+                    <div className="flex items-center space-x-2 p-3 rounded-lg bg-accent/10 border border-accent/20">
+                      <Checkbox
+                        id="batch-mode"
+                        checked={isBatchMode}
+                        onCheckedChange={(checked) => {
+                          setIsBatchMode(!!checked);
+                          setSelectedSiswaIds([]);
+                        }}
+                      />
+                      <Label htmlFor="batch-mode" className="flex items-center gap-2 cursor-pointer">
+                        <Users className="h-4 w-4" />
+                        Tambah beberapa siswa sekaligus (Mode Batch)
+                      </Label>
+                    </div>
+                  )}
 
-                  {/* Display Selected Siswa Info */}
-                  {selectedSiswa && (
+                  {/* Siswa Selection - Single Mode */}
+                  {!isBatchMode && (
+                    <div className="space-y-2">
+                      <Label htmlFor="siswa">Pilih Siswa</Label>
+                      <Select 
+                        value={selectedSiswaIds[0] || ''} 
+                        onValueChange={(value) => handleSiswaSelect(value, true)}
+                        disabled={!selectedKelas}
+                      >
+                        <SelectTrigger className="bg-input/50 border-border/50">
+                          <SelectValue placeholder={selectedKelas ? "Pilih siswa" : "Pilih kelas terlebih dahulu"} />
+                        </SelectTrigger>
+                        <SelectContent className="card-gradient border-border/50">
+                          {filteredSiswa.map((siswa) => (
+                            <SelectItem key={siswa.id} value={siswa.id}>
+                              {siswa.nama} - {siswa.nis}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Siswa Selection - Batch Mode (Multi-select with checkboxes) */}
+                  {isBatchMode && selectedKelas && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Pilih Siswa ({selectedSiswaIds.length} dipilih)</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSelectAllSiswa(selectedSiswaIds.length !== filteredSiswa.length)}
+                        >
+                          {selectedSiswaIds.length === filteredSiswa.length ? 'Batal Pilih Semua' : 'Pilih Semua'}
+                        </Button>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto border border-border/50 rounded-lg p-2 space-y-1 bg-input/30">
+                        {filteredSiswa.length === 0 ? (
+                          <p className="text-sm text-muted-foreground p-2">Tidak ada siswa di kelas ini</p>
+                        ) : (
+                          filteredSiswa.map((siswa) => (
+                            <div
+                              key={siswa.id}
+                              className="flex items-center space-x-2 p-2 rounded hover:bg-secondary/50 transition-colors"
+                            >
+                              <Checkbox
+                                id={`siswa-${siswa.id}`}
+                                checked={selectedSiswaIds.includes(siswa.id)}
+                                onCheckedChange={(checked) => handleSiswaSelect(siswa.id, !!checked)}
+                              />
+                              <Label htmlFor={`siswa-${siswa.id}`} className="flex-1 cursor-pointer text-sm">
+                                {siswa.nama} <span className="text-muted-foreground">({siswa.nis})</span>
+                              </Label>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Display Selected Siswa Info - Single mode only */}
+                  {!isBatchMode && selectedSiswaIds.length > 0 && (
                     <Card className="bg-primary/10 border-primary/20">
                       <CardContent className="pt-4">
                         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -420,6 +521,30 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                             <Label className="text-muted-foreground">Jurusan:</Label>
                             <p className="font-medium">{getSelectedSiswaData()?.jurusan?.nama}</p>
                           </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Display Selected Siswa Info - Batch mode */}
+                  {isBatchMode && selectedSiswaIds.length > 0 && (
+                    <Card className="bg-primary/10 border-primary/20">
+                      <CardContent className="pt-4">
+                        <p className="text-sm font-medium mb-2">{selectedSiswaIds.length} siswa terpilih:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedSiswaIds.slice(0, 5).map(id => {
+                            const siswa = getSelectedSiswaData(id);
+                            return siswa ? (
+                              <Badge key={id} variant="secondary" className="text-xs">
+                                {siswa.nama}
+                              </Badge>
+                            ) : null;
+                          })}
+                          {selectedSiswaIds.length > 5 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{selectedSiswaIds.length - 5} lainnya
+                            </Badge>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -545,8 +670,12 @@ const PrakerinContent = ({ user }: PrakerinContentProps) => {
                     <Button type="button" variant="outline" onClick={resetForm}>
                       Batal
                     </Button>
-                    <Button type="submit" className="glow-effect" disabled={!selectedSiswa}>
-                      {editingPrakerin ? 'Simpan' : 'Tambah'}
+                    <Button 
+                      type="submit" 
+                      className="glow-effect" 
+                      disabled={selectedSiswaIds.length === 0}
+                    >
+                      {editingPrakerin ? 'Simpan' : isBatchMode ? `Tambah ${selectedSiswaIds.length} Siswa` : 'Tambah'}
                     </Button>
                   </div>
                 </form>

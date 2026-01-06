@@ -131,8 +131,8 @@ const Sidebar = ({ activeMenu, setActiveMenu, user, collapsed, setCollapsed }: S
           </div>
         )}
 
-        {/* Navigation Menu with ScrollArea */}
-        <ScrollArea className="flex-1 -mx-2 px-2 my-4">
+        {/* Navigation Menu with ScrollArea - always show scrollbar */}
+        <ScrollArea className="flex-1 -mx-2 px-2 my-4 [&>[data-radix-scroll-area-viewport]]:max-h-[calc(100vh-320px)] [&_[data-radix-scroll-area-scrollbar]]:!opacity-100">
           <nav className="space-y-2 pr-4">
             {filteredMenuItems.map((item) => {
               const Icon = item.icon;
