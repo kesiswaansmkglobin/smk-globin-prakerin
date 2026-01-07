@@ -18,11 +18,17 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-      retry: 1,
+      staleTime: 3 * 60 * 1000, // 3 minutes - data dianggap fresh
+      gcTime: 5 * 60 * 1000, // 5 minutes - cache retention
+      retry: 1, // Minimal retry untuk responsivitas
       refetchOnWindowFocus: false,
       refetchOnMount: false,
+      refetchOnReconnect: true, // Refetch saat koneksi pulih
+      networkMode: 'offlineFirst', // Optimasi offline-first
+    },
+    mutations: {
+      retry: 1,
+      networkMode: 'offlineFirst',
     },
   },
 });
