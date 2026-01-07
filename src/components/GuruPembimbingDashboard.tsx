@@ -105,6 +105,7 @@ const GuruPembimbingDashboard = ({ user }: GuruPembimbingDashboardProps) => {
   });
 
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const loadData = useCallback(async () => {
     try {
@@ -366,16 +367,14 @@ const GuruPembimbingDashboard = ({ user }: GuruPembimbingDashboardProps) => {
     }
   };
 
-  if (loading) {
-    return <div className="text-center py-8 text-muted-foreground">Memuat data...</div>;
-  }
-
-  const navigate = useNavigate();
-
   const handleLogout = () => {
     localStorage.removeItem('user');
     navigate('/');
   };
+
+  if (loading) {
+    return <div className="text-center py-8 text-muted-foreground">Memuat data...</div>;
+  }
 
   return (
     <div className="space-y-6 p-6">
