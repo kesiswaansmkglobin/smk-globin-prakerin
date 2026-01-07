@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,8 +23,8 @@ export function useSupabaseQuery<T = any>({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Create unique query key based on params
-  const queryKey = [table, select, filters, orderBy];
+  // Create stable query key using useMemo
+  const queryKey = useMemo(() => [table, select, filters, orderBy], [table, select, JSON.stringify(filters), JSON.stringify(orderBy)]);
 
   const fetchData = async () => {
     try {
@@ -65,12 +65,13 @@ export function useSupabaseQuery<T = any>({
     }
   };
 
-  const { data = [], isLoading: loading, error: queryError } = useQuery({
+  const { data = [], isLoading: loading, error: queryError, isFetching } = useQuery({
     queryKey,
     queryFn: fetchData,
     enabled,
-    staleTime: 3 * 60 * 1000, // 3 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes - lebih cepat refresh
     gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: 'always', // Selalu cek data terbaru saat mount
   });
 
   const error = queryError ? (queryError as Error).message : null;

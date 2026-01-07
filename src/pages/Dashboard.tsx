@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense, memo } from 'react';
+import React, { useState, useEffect, lazy, Suspense, memo, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSwipeable } from 'react-swipeable';
 import Sidebar from '@/components/Sidebar';
@@ -87,7 +87,8 @@ const Dashboard = () => {
     setUser(JSON.parse(userData));
   }, [navigate]);
 
-  const renderContent = () => {
+  // Memoize renderContent untuk mencegah re-render yang tidak perlu
+  const renderContent = useMemo(() => {
     // Special dashboard for guru_pembimbing
     if (user?.role === 'guru_pembimbing') {
       return <GuruPembimbingDashboard user={user} />;
@@ -125,7 +126,16 @@ const Dashboard = () => {
       default:
         return <DashboardContent user={user} />;
     }
-  };
+  }, [activeMenu, user]);
+
+  // Memoize handlers untuk mencegah re-create
+  const handleSetActiveMenu = useCallback((menu: MenuType) => {
+    setActiveMenu(menu);
+  }, []);
+
+  const handleSetCollapsed = useCallback((collapsed: boolean) => {
+    setSidebarCollapsed(collapsed);
+  }, []);
 
   if (!user) {
     return null;
@@ -138,7 +148,7 @@ const Dashboard = () => {
         <main className="overflow-auto">
           <div className="p-4 md:p-6">
             <Suspense fallback={<LoadingSpinner />}>
-              {renderContent()}
+              {renderContent}
             </Suspense>
           </div>
         </main>
@@ -152,10 +162,10 @@ const Dashboard = () => {
       {!isMobile && (
         <Sidebar 
           activeMenu={activeMenu} 
-          setActiveMenu={setActiveMenu}
+          setActiveMenu={handleSetActiveMenu}
           user={user}
           collapsed={sidebarCollapsed}
-          setCollapsed={setSidebarCollapsed}
+          setCollapsed={handleSetCollapsed}
         />
       )}
       
@@ -163,7 +173,7 @@ const Dashboard = () => {
       <main {...handlers} className="flex-1 overflow-auto pb-20 md:pb-0">
         <div className="p-4 md:p-6">
           <Suspense fallback={<LoadingSpinner />}>
-            {renderContent()}
+            {renderContent}
           </Suspense>
         </div>
       </main>
@@ -172,7 +182,7 @@ const Dashboard = () => {
       {isMobile && (
         <BottomNav 
           activeMenu={activeMenu} 
-          setActiveMenu={setActiveMenu}
+          setActiveMenu={handleSetActiveMenu}
           user={user}
         />
       )}
