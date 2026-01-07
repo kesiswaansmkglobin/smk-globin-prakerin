@@ -87,6 +87,8 @@ const GuruPembimbingDashboard = ({ user }: GuruPembimbingDashboardProps) => {
   // Bimbingan form
   const [bimbinganDialogOpen, setBimbinganDialogOpen] = useState(false);
   const [editingBimbingan, setEditingBimbingan] = useState<Bimbingan | null>(null);
+  const [bimbinganBatchMode, setBimbinganBatchMode] = useState(false);
+  const [selectedPrakerinIds, setSelectedPrakerinIds] = useState<string[]>([]);
   const [bimbinganForm, setBimbinganForm] = useState({
     prakerin_id: '',
     tanggal: '',
@@ -192,28 +194,52 @@ const GuruPembimbingDashboard = ({ user }: GuruPembimbingDashboardProps) => {
     e.preventDefault();
     try {
       const guruPembimbingId = user?.guru_pembimbing_id || user?.id;
-      const data = {
-        prakerin_id: bimbinganForm.prakerin_id,
-        guru_pembimbing_id: guruPembimbingId,
-        tanggal: bimbinganForm.tanggal,
-        kegiatan: bimbinganForm.kegiatan,
-        catatan: bimbinganForm.catatan || null,
-        paraf: bimbinganForm.paraf
-      };
 
-      if (editingBimbingan) {
+      // Batch mode - insert multiple bimbingan records
+      if (bimbinganBatchMode && selectedPrakerinIds.length > 0 && !editingBimbingan) {
+        const batchData = selectedPrakerinIds.map(prakerinId => ({
+          prakerin_id: prakerinId,
+          guru_pembimbing_id: guruPembimbingId,
+          tanggal: bimbinganForm.tanggal,
+          kegiatan: bimbinganForm.kegiatan,
+          catatan: bimbinganForm.catatan || null,
+          paraf: bimbinganForm.paraf
+        }));
+
         const { error } = await supabase
           .from('bimbingan')
-          .update(data)
-          .eq('id', editingBimbingan.id);
+          .insert(batchData);
+        
         if (error) throw error;
-        toast({ title: "Berhasil", description: "Bimbingan berhasil diperbarui" });
+        toast({ 
+          title: "Berhasil", 
+          description: `${selectedPrakerinIds.length} catatan bimbingan berhasil ditambahkan` 
+        });
       } else {
-        const { error } = await supabase
-          .from('bimbingan')
-          .insert([data]);
-        if (error) throw error;
-        toast({ title: "Berhasil", description: "Bimbingan berhasil ditambahkan" });
+        // Single mode
+        const data = {
+          prakerin_id: bimbinganForm.prakerin_id,
+          guru_pembimbing_id: guruPembimbingId,
+          tanggal: bimbinganForm.tanggal,
+          kegiatan: bimbinganForm.kegiatan,
+          catatan: bimbinganForm.catatan || null,
+          paraf: bimbinganForm.paraf
+        };
+
+        if (editingBimbingan) {
+          const { error } = await supabase
+            .from('bimbingan')
+            .update(data)
+            .eq('id', editingBimbingan.id);
+          if (error) throw error;
+          toast({ title: "Berhasil", description: "Bimbingan berhasil diperbarui" });
+        } else {
+          const { error } = await supabase
+            .from('bimbingan')
+            .insert([data]);
+          if (error) throw error;
+          toast({ title: "Berhasil", description: "Bimbingan berhasil ditambahkan" });
+        }
       }
 
       setBimbinganDialogOpen(false);
@@ -256,6 +282,24 @@ const GuruPembimbingDashboard = ({ user }: GuruPembimbingDashboardProps) => {
       paraf: false
     });
     setEditingBimbingan(null);
+    setBimbinganBatchMode(false);
+    setSelectedPrakerinIds([]);
+  };
+
+  const handlePrakerinSelect = (prakerinId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedPrakerinIds(prev => [...prev, prakerinId]);
+    } else {
+      setSelectedPrakerinIds(prev => prev.filter(id => id !== prakerinId));
+    }
+  };
+
+  const handleSelectAllPrakerin = (checked: boolean) => {
+    if (checked) {
+      setSelectedPrakerinIds(prakerinList.map(p => p.id));
+    } else {
+      setSelectedPrakerinIds([]);
+    }
   };
 
   // Nilai CRUD
@@ -537,24 +581,78 @@ const GuruPembimbingDashboard = ({ user }: GuruPembimbingDashboardProps) => {
                       {editingBimbingan ? 'Edit Bimbingan' : 'Tambah Bimbingan'}
                     </DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleBimbinganSubmit} className="space-y-4">
+                  <form onSubmit={handleBimbinganSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                    {/* Batch Mode Toggle - Only show when adding new */}
+                    {!editingBimbingan && (
+                      <div className="flex items-center space-x-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                        <Checkbox
+                          id="batchModeBimbingan"
+                          checked={bimbinganBatchMode}
+                          onCheckedChange={(c) => {
+                            setBimbinganBatchMode(c as boolean);
+                            if (!c) setSelectedPrakerinIds([]);
+                          }}
+                        />
+                        <Label htmlFor="batchModeBimbingan" className="text-sm font-medium cursor-pointer">
+                          Mode Batch - Pilih beberapa siswa sekaligus
+                        </Label>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label>Siswa Prakerin *</Label>
-                      <Select
-                        value={bimbinganForm.prakerin_id}
-                        onValueChange={(v) => setBimbinganForm(prev => ({ ...prev, prakerin_id: v }))}
-                      >
-                        <SelectTrigger className="bg-input/50 border-border/50">
-                          <SelectValue placeholder="Pilih siswa" />
-                        </SelectTrigger>
-                        <SelectContent>
+                      {bimbinganBatchMode && !editingBimbingan ? (
+                        <div className="space-y-2 max-h-48 overflow-y-auto border border-border/50 rounded-lg p-3 bg-input/30">
+                          {/* Select All */}
+                          <div className="flex items-center space-x-2 pb-2 border-b border-border/30">
+                            <Checkbox
+                              id="selectAllBimbingan"
+                              checked={selectedPrakerinIds.length === prakerinList.length && prakerinList.length > 0}
+                              onCheckedChange={handleSelectAllPrakerin}
+                            />
+                            <Label htmlFor="selectAllBimbingan" className="text-sm font-medium cursor-pointer">
+                              Pilih Semua ({prakerinList.length} siswa)
+                            </Label>
+                          </div>
+                          {/* Individual checkboxes */}
                           {prakerinList.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.siswa?.nama} - {p.tempat_prakerin}
-                            </SelectItem>
+                            <div key={p.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`bimbingan-${p.id}`}
+                                checked={selectedPrakerinIds.includes(p.id)}
+                                onCheckedChange={(c) => handlePrakerinSelect(p.id, c as boolean)}
+                              />
+                              <Label htmlFor={`bimbingan-${p.id}`} className="text-sm cursor-pointer">
+                                {p.siswa?.nama} - {p.tempat_prakerin || 'Belum ada tempat'}
+                              </Label>
+                            </div>
                           ))}
-                        </SelectContent>
-                      </Select>
+                          {prakerinList.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-2">Tidak ada siswa prakerin</p>
+                          )}
+                        </div>
+                      ) : (
+                        <Select
+                          value={bimbinganForm.prakerin_id}
+                          onValueChange={(v) => setBimbinganForm(prev => ({ ...prev, prakerin_id: v }))}
+                        >
+                          <SelectTrigger className="bg-input/50 border-border/50">
+                            <SelectValue placeholder="Pilih siswa" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {prakerinList.map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.siswa?.nama} - {p.tempat_prakerin}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {bimbinganBatchMode && selectedPrakerinIds.length > 0 && (
+                        <p className="text-xs text-primary">
+                          {selectedPrakerinIds.length} siswa dipilih
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -602,8 +700,12 @@ const GuruPembimbingDashboard = ({ user }: GuruPembimbingDashboardProps) => {
                       <Button type="button" variant="outline" onClick={() => setBimbinganDialogOpen(false)}>
                         Batal
                       </Button>
-                      <Button type="submit" className="glow-effect">
-                        {editingBimbingan ? 'Simpan' : 'Tambah'}
+                      <Button 
+                        type="submit" 
+                        className="glow-effect"
+                        disabled={bimbinganBatchMode && selectedPrakerinIds.length === 0 && !editingBimbingan}
+                      >
+                        {editingBimbingan ? 'Simpan' : bimbinganBatchMode ? `Tambah (${selectedPrakerinIds.length})` : 'Tambah'}
                       </Button>
                     </div>
                   </form>
